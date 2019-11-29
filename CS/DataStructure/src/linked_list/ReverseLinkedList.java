@@ -14,7 +14,7 @@ public class ReverseLinkedList {
      * @param list 待反转的链表
      * @return 反转后的链表头结点
      */
-    public static Node resolve(Node list) {
+    public static Node resolution(Node list) {
         //链表为空或只有一个结点，直接返回
         if (list == null || list.next == null) {
             return list;
@@ -41,7 +41,7 @@ public class ReverseLinkedList {
      * @param list
      * @return
      */
-    public static Node resolveByRecursion(Node list) {
+    public static Node resolutionByRecursion(Node list) {
         //如果是空链表，直接返回
         if (list == null) {
             return null;
@@ -59,7 +59,7 @@ public class ReverseLinkedList {
 //        }
 
         //通过递归反转当前结点后的节点
-        Node reversedList = resolveByRecursion(list.next);
+        Node reversedList = resolutionByRecursion(list.next);
 
         //此时 list.next 指向反转的链表的尾结点
         //假设原链表为1->2->3->4->null，当前结点list为1
