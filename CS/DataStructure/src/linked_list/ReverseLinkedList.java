@@ -14,14 +14,16 @@ public class ReverseLinkedList {
             return list;
         }
 
-        Node cur = list;
         //新链表头结点
         Node newHead = null;
-        while (cur != null) {
-            Node next = cur.next;
-            cur.next = newHead;
-            newHead = cur;
-            cur = next;
+        while (list != null) {
+            //当前结点的下一个结点
+            Node next = list.next;
+            //将结点的 next 指向前一个结点
+            list.next = newHead;
+            //头结点迁移
+            newHead = list;
+            list = next;
         }
         return newHead;
     }
