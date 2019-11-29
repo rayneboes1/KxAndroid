@@ -1,4 +1,3 @@
-package linked_list;
 
 import javax.jnlp.ClipboardService;
 
