@@ -8,6 +8,7 @@ public class Node {
     }
 
     public static String link2String(Node head) {
+        //未处理链表成环的情况
         if (head == null) {
             return "";
         }
