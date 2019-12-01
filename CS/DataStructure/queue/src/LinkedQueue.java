@@ -2,10 +2,9 @@ public class LinkedQueue implements Queue {
     private int initCap;
     private int size;
     //空数据的头结点，用于简化操作
-    private Node head = new Node(-1);
-    private Node tail = head;
-    private Node tailPre;
-
+    //头结点作为队列的尾部
+    private Node tail = new Node(-1);
+    private Node head = tail;
 
     public LinkedQueue(int initCap) {
         this.initCap = initCap;
@@ -18,11 +17,8 @@ public class LinkedQueue implements Queue {
             return false;
         }
         Node n = new Node(data);
-        n.next = head.next;
         head.next = n;
-        if (head == tail) {
-            tail = n;
-        }
+        head = n;
         size++;
         return true;
     }
@@ -32,19 +28,14 @@ public class LinkedQueue implements Queue {
         if (isEmpty()) {
             return -1;
         }
-        int v = tail.data;
-        Node pre = head;
-        while (pre != null) {
-            if (pre.next == tail) {
-                break;
-            }
-            pre = pre.next;
+        Node n = tail.next;
+        tail.next = n.next;
+        if (n == head) {
+            //只有一个结点情况
+            head = tail;
         }
-        assert pre != null;
-        pre.next = null;
-        tail = pre;
         size--;
-        return v;
+        return n.data;
     }
 
     @Override
@@ -59,8 +50,8 @@ public class LinkedQueue implements Queue {
 
     @Override
     public void clear() {
-        tail = head;
-        Node n = head;
+        head = tail;
+        Node n = tail;
         while (n.next != null) {
             Node t = n.next;
             n.next = t.next;

@@ -29,6 +29,11 @@ public class LinkedQueueTest {
         assertEquals(3,q.deque());
         assertTrue(q.isEmpty());
         assertEquals(-1,q.deque());
+        q.enqueue(1);
+        assertEquals(1,q.size());
+        q.enqueue(2);
+        assertEquals(2,q.size());
+        assertEquals(1,q.deque());
     }
 
     @Test
