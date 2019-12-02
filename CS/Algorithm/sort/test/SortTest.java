@@ -54,6 +54,18 @@ public class SortTest {
 
     }
 
+    @Test
+    public void testMergeSort(){
+        for (int i = 0; i < 100; i++) {
+            int[] arr = randomArray();
+            int[] arrCopy = Arrays.copyOf(arr, arr.length);
+            ISort sort = new MergeSort();
+            sort.sort(arr);
+            Arrays.sort(arrCopy);
+            assertEquals(Arrays.toString(arrCopy), Arrays.toString(arr));
+        }
+    }
+
 
     private int[] randomArray() {
         int[] arr = new int[random.nextInt(100)];
