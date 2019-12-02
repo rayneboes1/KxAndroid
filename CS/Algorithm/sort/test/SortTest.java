@@ -28,8 +28,21 @@ public class SortTest {
         }
     }
 
+    @Test
+    public void testInsertSort(){
+        for (int i = 0; i < 100; i++) {
+            int[] arr = randomArray();
+            int[] arrCopy = Arrays.copyOf(arr, arr.length);
+            ISort sort = new InsertSort();
+            sort.sort(arr);
+            Arrays.sort(arrCopy);
+            assertEquals(Arrays.toString(arrCopy), Arrays.toString(arr));
+        }
 
-    public int[] randomArray() {
+    }
+
+
+    private int[] randomArray() {
         int[] arr = new int[100];
         for (int j = 0; j < arr.length; j++) {
             arr[j] = random.nextInt(200);
