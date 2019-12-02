@@ -41,9 +41,22 @@ public class SortTest {
 
     }
 
+    @Test
+    public void testSelectSort(){
+        for (int i = 0; i < 100; i++) {
+            int[] arr = randomArray();
+            int[] arrCopy = Arrays.copyOf(arr, arr.length);
+            ISort sort = new SelectSort();
+            sort.sort(arr);
+            Arrays.sort(arrCopy);
+            assertEquals(Arrays.toString(arrCopy), Arrays.toString(arr));
+        }
+
+    }
+
 
     private int[] randomArray() {
-        int[] arr = new int[100];
+        int[] arr = new int[random.nextInt(100)];
         for (int j = 0; j < arr.length; j++) {
             arr[j] = random.nextInt(200);
         }
