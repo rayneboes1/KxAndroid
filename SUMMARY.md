@@ -14,6 +14,7 @@
       * [排序](cs/algorithm/sort/knowledge.md)
 * [Java](java/README.md)
   * [Java 面试知识点](java/knowledge.md)
+  * [集合](java/ji-he.md)
   * [source](java/source/README.md)
     * [LinkedHashMap 原理与源码](java/source/linkedhashmap.md)
     * [HashMap](java/source/hashmap.md)
