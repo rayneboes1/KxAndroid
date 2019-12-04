@@ -194,6 +194,12 @@ System.out.println(g.equals(a+h)); //true,a+h 类型提升后为long
 
 `wait(long timeout)` `wait(long timeout, int nanos)` `wait()`
 
+### hashcode\(\)的作用，与equal\(\)有什么区别？
+
+{% embed url="https://juejin.im/post/5a4379d4f265da432003874c\#heading-6" %}
+
+
+
 ## 异常
 
 ### 遇见过哪些运行时异常？异常处理机制知道哪些？
