@@ -1,13 +1,15 @@
-## LinkedHashMap 原理与源码
+# LinkedHashMap 原理与源码
 
 LinkedHashMap 是一个哈希表，拥有可预测的迭代顺序。与 HashMap 不同点在于使用了一个双向链表来维护所有的 Entry，双向链表定义了哈希表的迭代顺序。
 
-### 一个参数 
-LinkedHashMap 的迭代顺序有两种：节点插入顺序和节点访问循序。可通过在构造方法中传递 `boolean accessOrder`来指定。    
+## 一个参数
+
+LinkedHashMap 的迭代顺序有两种：节点插入顺序和节点访问循序。可通过在构造方法中传递 `boolean accessOrder`来指定。
 
 当 `accessOrder` 为 false 时，迭代顺序为节点插入顺序；当 `accessOrder` 为 true 时，迭代顺序为节点访问顺序。
 
-### 节点类型
+## 节点类型
+
 继承了 HashMap 的 Node 类，并增加了前后指针，以便构造双向链表。
 
 ```java
@@ -19,14 +21,18 @@ static class Entry<K,V> extends HashMap.Node<K,V> {
     }
 ```
 
-### 节点创建
+## 节点创建
+
 在 HashMap 中，创建节点是通过 `newNode` 方法：
+
 ```java
 Node<K,V> newNode(int hash, K key, V value, Node<K,V> next) {
         return new Node<>(hash, key, value, next);
     }
 ```
+
 而 LinkedHashMap 通过重写 HashMap 的 `newNode` 方法，创建Entry实例:
+
 ```java
 @Override
 Node<K,V> newNode(int hash, K key, V value, Node<K,V> e) {
@@ -35,22 +41,22 @@ Node<K,V> newNode(int hash, K key, V value, Node<K,V> e) {
         linkNodeLast(p);
         return p;
 }
-``` 
+```
 
-### 更新迭代顺序的时机  
+## 更新迭代顺序的时机
 
-在 HashMap 中，定义了如下三个方法:   
+在 HashMap 中，定义了如下三个方法:
 
 ```java
  // Callbacks to allow LinkedHashMap post-actions
     void afterNodeAccess(Node<K,V> p) { }
     void afterNodeInsertion(boolean evict) { }
     void afterNodeRemoval(Node<K,V> p) { }
-```  
+```
 
-通过注释可以看出是专门为 LinkedHashMap 进行后续行为而定义的。   
+通过注释可以看出是专门为 LinkedHashMap 进行后续行为而定义的。
 
-`afterNodeAccess` 是节点被访问后调用，在 HashMap 中，这个方法只在更新旧节点的值时被调用了，在`get`方法内并没有被调用，因此 LinkedHashMap 重写了 `get`方法，当需要根据访问顺序迭代时，调用`afterNodeAccess` 调整：  
+`afterNodeAccess` 是节点被访问后调用，在 HashMap 中，这个方法只在更新旧节点的值时被调用了，在`get`方法内并没有被调用，因此 LinkedHashMap 重写了 `get`方法，当需要根据访问顺序迭代时，调用`afterNodeAccess` 调整：
 
 ```java
 public V get(Object key) {
@@ -63,28 +69,27 @@ public V get(Object key) {
     }
     return e.value;
 }
-```  
+```
 
-`afterNodeInsertion` 处理新增节点后行为,在 HashMap 中的 `putVal`方法中最后就调用了这个方法，但是 `afterNodeInsertion` **只处理了新节点添加之后**的顺序更新，比如如果需要删除头节点，则在此时进行删除调整；而对于新创建的节点，更新迭代顺序是在`linkNodeLast`方法中，如上面代码所示，这个方法是在`newNode`方法中被调用的。   
+`afterNodeInsertion` 处理新增节点后行为,在 HashMap 中的 `putVal`方法中最后就调用了这个方法，但是 `afterNodeInsertion` **只处理了新节点添加之后**的顺序更新，比如如果需要删除头节点，则在此时进行删除调整；而对于新创建的节点，更新迭代顺序是在`linkNodeLast`方法中，如上面代码所示，这个方法是在`newNode`方法中被调用的。
 
-`afterNodeRemoval` 在 HashMap 中的`removeNode`方法中调用。  
+`afterNodeRemoval` 在 HashMap 中的`removeNode`方法中调用。
 
-综上，LinkedHashMap 更新迭代顺序链表的时机为：  
+综上，LinkedHashMap 更新迭代顺序链表的时机为：
 
-|时机|调用方法|
-|:--:|:--:|
-|插入新节点时|`linkNodeLast`|
-|插入新节点后（处理删除头节点）|`afterNodeInsertion`|
-|更新旧节点|`afterNodeAccess`|
-|删除节点|`afterNodeRemoval`|
-|访问节点|`afterNodeAccess`|  
+| 时机 | 调用方法 |
+| :---: | :---: |
+| 插入新节点时 | `linkNodeLast` |
+| 插入新节点后（处理删除头节点） | `afterNodeInsertion` |
+| 更新旧节点 | `afterNodeAccess` |
+| 删除节点 | `afterNodeRemoval` |
+| 访问节点 | `afterNodeAccess` |
 
-### 调整顺序的源码实现
+## 调整顺序的源码实现
 
+### `linkNodeLast`
 
-#### `linkNodeLast`
-
-linkNodeLast 的作用就是将新创建的节点放置于链表尾部，其源码如下： 
+linkNodeLast 的作用就是将新创建的节点放置于链表尾部，其源码如下：
 
 ```java
 private void linkNodeLast(LinkedHashMap.Entry<K,V> p) {
@@ -103,7 +108,7 @@ private void linkNodeLast(LinkedHashMap.Entry<K,V> p) {
 }
 ```
 
-#### `afterNodeInsertion`
+### `afterNodeInsertion`
 
 ```java
 void afterNodeInsertion(boolean evict) { // possibly remove eldest
@@ -117,11 +122,12 @@ void afterNodeInsertion(boolean evict) { // possibly remove eldest
     }
 ```
 
-`evict` 标识 HashMap 是否处于创建中，evict 为 `false` 的情况主要包括在构造方法中、`clone`、`readFromObject`等方法中调用 put 相关操作时，其他情况一律为 `true`。  
+`evict` 标识 HashMap 是否处于创建中，evict 为 `false` 的情况主要包括在构造方法中、`clone`、`readFromObject`等方法中调用 put 相关操作时，其他情况一律为 `true`。
 
-可以看出 `afterNodeInsertion` 主要是根据需要移除头结点，然后在移除后会有调整顺序的操作，不过已经是在`afterNodeRemoval`方法中了。 (`removeNode` 会调用 `afterNodeRemoval`)
+可以看出 `afterNodeInsertion` 主要是根据需要移除头结点，然后在移除后会有调整顺序的操作，不过已经是在`afterNodeRemoval`方法中了。 \(`removeNode` 会调用 `afterNodeRemoval`\)
 
-#### `afterNodeRemoval`
+### `afterNodeRemoval`
+
 `afterNodeRemoval` 的作用很简单，处理了节点删除后的链表维护。
 
 ```java
@@ -146,8 +152,10 @@ void afterNodeRemoval(Node<K,V> e) { // unlink
     }
 }
 ```
-#### `afterNodeAccess`
-`afterNodeAccess` 方法在 `accessOrder`为`true`时，将被访问的节点移到链表尾部。  
+
+### `afterNodeAccess`
+
+`afterNodeAccess` 方法在 `accessOrder`为`true`时，将被访问的节点移到链表尾部。
 
 ```java
 void afterNodeAccess(Node<K,V> e) { // move node to last
@@ -185,5 +193,8 @@ void afterNodeAccess(Node<K,V> e) { // move node to last
     }
 }
 ```
-### 总结
+
+## 总结
+
 LinkedHashMap 是一个拥有可预测迭代顺序的哈希表，它继承自 HashMap，并用一个双向链表来维护所有 entry 的顺序，默认迭代顺序是按节点插入顺序，可以通过将`accessOrder`设为`true`将迭代顺序指定为节点访问顺序。当节点被添加、修改、访问和删除时，通过调用对应的方法来调整节点在双向链表中的顺序，从而达到维护访问顺序的目的。
+
