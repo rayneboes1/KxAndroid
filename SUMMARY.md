@@ -1,7 +1,6 @@
 # Table of contents
 
 * [InterviewAndroid](README.md)
-* [计算机基础](ji-suan-ji-ji-chu.md)
 * [CS](cs/README.md)
   * [DataStructure](cs/datastructure/README.md)
     * [queue](cs/datastructure/queue/README.md)
