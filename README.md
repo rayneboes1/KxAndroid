@@ -2,7 +2,5 @@
 
 > 怕什么真理无穷，进一寸有一寸的欢喜。
 
-Android 面试专用仓库，包含面试知识点、代码 Demo 等。
-
-请多多指教。
+[Android 面试题汇总](https://wenhaiz.gitbook.io/androidinterview/)，host by gitbook.
 
