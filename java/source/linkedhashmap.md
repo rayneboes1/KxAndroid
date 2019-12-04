@@ -1,4 +1,4 @@
-# LinkedHashMap 原理与源码
+# LinkedHashMap
 
 LinkedHashMap 是一个哈希表，拥有可预测的迭代顺序。与 HashMap 不同点在于使用了一个双向链表来维护所有的 Entry，双向链表定义了哈希表的迭代顺序。
 
