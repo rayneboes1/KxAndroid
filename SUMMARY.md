@@ -1,6 +1,6 @@
 # Table of contents
 
-* [InterviewAndroid](README.md)
+* [写在前面](README.md)
 * [计算机基础](cs/README.md)
   * [数据结构](cs/datastructure/README.md)
     * [队列](cs/datastructure/queue.md)
@@ -17,4 +17,6 @@
   * [反射](java/reflection/README.md)
     * [Java 反射知识](java/reflection/knowledge.md)
 * [Android](android.md)
+* [Kotlin](kotlin.md)
+* [关于作者](guan-yu-zuo-zhe.md)
 
