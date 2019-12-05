@@ -1,2 +1,2 @@
-# Algorithm
+# 算法
 
