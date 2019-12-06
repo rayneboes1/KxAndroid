@@ -21,7 +21,7 @@
   * [源码与原理](java/source/README.md)
     * [HashMap](java/source/hashmap.md)
     * [LinkedHashMap](java/source/linkedhashmap.md)
-  * [新动态](java/xin-dong-tai.md)
+  * [版本特性](java/version.md)
 * [Android](android.md)
 * [Kotlin](kotlin.md)
 * [关于作者](about_author.md)
