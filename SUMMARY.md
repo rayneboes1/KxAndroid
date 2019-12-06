@@ -11,6 +11,7 @@
 * [Java](java/README.md)
   * [基础](java/base.md)
   * [异常](java/exception.md)
+  * [并发编程](java/concurrent.md)
   * [集合](java/collection.md)
   * [反射](java/reflection.md)
   * [源码与原理](java/source/README.md)
