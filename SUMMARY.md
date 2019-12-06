@@ -17,6 +17,7 @@
   * [并发编程](java/concurrent.md)
   * [集合](java/collection.md)
   * [反射](java/reflection.md)
+  * [JVM](java/jvm.md)
   * [源码与原理](java/source/README.md)
     * [HashMap](java/source/hashmap.md)
     * [LinkedHashMap](java/source/linkedhashmap.md)

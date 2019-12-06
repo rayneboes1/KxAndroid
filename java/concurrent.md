@@ -1,22 +1,38 @@
 # 并发编程
 
-### 开启一个线程的方法有哪些？销毁一个线程的方法呢？
+### 如何开启一个 Java 线程？
 
-### 同步和非同步、阻塞和非阻塞的概念
+* 继承`Thread` 类并重写 run 方法，将要执行的任务放到run方法中，然后创建Thread 对象并调用 start 方法。
+* 实现 `Runnable` 接口，将要执行的任务放到run方法中，然后通过Thread 构造方法传入该 Runable 对象，然后调用Thread 对象的 start 方法启动线程
+* 实现 `Callable` 接口，并通过 Callable 对象创建 `FutureTask` 对象，然后将 FutureTask 对象传入 Thread 构造方法创建线程，调用 start 方法启动线程，可以通过 FutureTask 的 `get` 方法获取执行结果。
+* 通过线程池来根据需要开启线程
+
+### 销毁一个线程的方法呢？
+
+* 任务执行完后自动结束
+* 设置结束标识，并通过检查标识在run方法中 return 
+* 调用线程的 interrupt 方法来中断线程。如果线程处于阻塞状态，会抛 InterruptedException ，可以捕捉这个异常并停止执行任务；如果线程处于非阻塞状态，可通过调用 isInterrupted 来判断线程已经被中断，然后执行资源释放等工作结束线程
+* 调用stop方法强制停止线程。stop方法已经被废弃，使用此方法结束线程可能导致资源不能被正确释放、数据的线程安全无法得到保障以及引发 SecurityException（SecurityManage 会通过checkAccess 检查当前线程没有权限结束这个线程）。
+
+> stop 会是线程释放持有的所有的锁，如果被所保护的资源处于一个中间态（非正常），那么它将会被其他线程访问到，因此会导致无法预料的行为，使程序变得不可靠。
+
+### Runnable 和 Callable 有什么区别和联系？
+
+### 同步和异步、阻塞和非阻塞的概念
 
 ### Thread的join\(\)有什么作用？
 
-### 线程的有哪些状态？
+### 线程有哪些状态？
 
 ### 什么是线程安全？保障线程安全有哪些手段？
 
-### ReentrantLock和synchronized的区别?
+### ReentrantLock 和 synchronized的区别?
 
-### synchronized和volatile的区别？
+### synchronized 和 volatile的区别？
 
-### synchronized同步代码块还有同步方法本质上锁住的是谁？为什么？
+### synchronized 同步代码块还有同步方法本质上锁住的是谁？为什么？
 
-### sleep\(\)和wait\(\)的区别？
+### sleep\(\) 和 wait\(\) 的区别？
 
 ### 什么是乐观锁?
 
