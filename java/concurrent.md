@@ -114,13 +114,11 @@ public interface Callable<V> {
 
 #### 线程状态转换
 
-
-
-1. RUNNABLE 与 BLOCKED 的状态转换
+**1. RUNNABLE 与 BLOCKED 的状态转换**
 
 只有一种场景会触发这种转换，就是线程等待 synchronized 的隐式锁。synchronized 修饰的方法、代码块同一时刻只允许一个线程执行，其他线程只能等待，这种情况下，等待的线程就会从 RUNNABLE 转换到 BLOCKED 状态。而当等待的线程获得 synchronized 隐式锁时，就又会从 BLOCKED 转换到 RUNNABLE 状态。
 
-2. RUNNABLE 与 WAITING 的状态转换
+**2. RUNNABLE 与 WAITING 的状态转换**
 
 第一种场景，获得 synchronized 隐式锁的线程，调用无参数的 Object.wait\(\) 方法。
 
@@ -128,7 +126,7 @@ public interface Callable<V> {
 
 第三种场景，调用 LockSupport.park\(\) 方法。调用 LockSupport.park\(\) 方法，当前线程会阻塞，线程的状态会从 RUNNABLE 转换到 WAITING。调用 LockSupport.unpark\(Thread thread\) 可唤醒目标线程，目标线程的状态又会从 WAITING 状态转换到 RUNNABLE。
 
-3. RUNNABLE 与 TIMED\_WAITING 的状态转换
+**3.  RUNNABLE 与 TIMED\_WAITING 的状态转换**
 
 * 调用带超时参数的 Thread.sleep\(long millis\) 方法；
 * 获得 synchronized 隐式锁的线程，调用带超时参数的 Object.wait\(long timeout\) 方法；
@@ -138,11 +136,11 @@ public interface Callable<V> {
 
 TIMED\_WAITING 和 WAITING 状态的区别，仅仅是触发条件多了超时参数。
 
-4. 从 NEW 到 RUNNABLE 状态
+**4.从 NEW 到 RUNNABLE 状态**
 
 Java 刚创建出来的 Thread 对象就是 NEW 状态，NEW 状态的线程，不会被操作系统调度，因此不会执行。Java 线程要执行，就必须转换到 RUNNABLE 状态。从 NEW 状态转换到 RUNNABLE 状态很简单，只要调用线程对象的 start\(\) 方法就可以了。
 
-5. 从 RUNNABLE 到 TERMINATED 状态
+**5. 从 RUNNABLE 到 TERMINATED 状态**
 
 线程执行完 run\(\) 方法后，会自动转换到 TERMINATED 状态，当然如果执行 run\(\) 方法的时候异常抛出，也会导致线程终止。也可以手动终止线程（注意 stop\(\) 和 interrupt\(\)方法 ）。
 
