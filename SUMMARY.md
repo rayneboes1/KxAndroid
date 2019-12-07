@@ -39,5 +39,5 @@
 * [Android](android.md)
 * [Kotlin](kotlin.md)
 * [关于作者](about_author.md)
-* [致谢](zhi-xie.md)
+* [致谢](thanks.md)
 
