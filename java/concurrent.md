@@ -154,6 +154,8 @@ Java 刚创建出来的 Thread 对象就是 NEW 状态，NEW 状态的线程，�
 
 ### 保障线程安全有哪些手段？
 
+> 保证原子性、可见性和有序性
+
 * 不在线程间共享数据，比如方法的局部变量
 * 使用不可变对象，因为不可变所以天然线程安全
 * 对临界资源进行加锁，保证线程之间的操作互斥，以此来保证线程安全
@@ -161,20 +163,50 @@ Java 刚创建出来的 Thread 对象就是 NEW 状态，NEW 状态的线程，�
 
 ### ReentrantLock 和 synchronized的区别?
 
+#### 相似点
+
+都是加锁方式同步，而且都是阻塞式的同步，也就是说当如果一个线程获得了对象锁，进入了同步块，其他访问该同步块的线程都必须阻塞在同步块外面等待，而进行线程阻塞和唤醒的代价是比较高的（操作系统需要在用户态与内核态之间来回切换，代价很高，不过可以通过对锁优化进行改善）
+
+#### 区别
+
+* 使用方法：synchronized  是 Java 关键字，可以用于修饰方法和代码块，不用手动释放锁；ReentrantLock 需要通过lock 加锁，unlock 释放锁
+* 等待可中断：使用synchronized。如果持有锁的线程不释放，那么其他线程将一直等待，不能被中断。synchronized也可以说是Java提供的原子性内置锁机制。内部锁扮演了互斥锁（mutual exclusion lock ，mutex）的角色，一个线程引用锁的时候，别的线程阻塞等待；使用ReentrantLock，可以通过 `tryLock(long timeout, TimeUnit unit)`方法如果持有锁的线程不释放，等待线程等了很长时间以后，可以中断等待，转而去做别的事情。
+* 公平锁：synchronized的锁是非公平锁，ReentrantLock默认情况下也是非公平锁，但可以通过带布尔值的构造函数要求使用公平锁。
+* 多条件：synchronized中，锁对象的wait\(\)和notify\(\)或notifyAll\(\)方法可以实现一个隐含的条件，但如果要和多于一个的条件关联的时候，就不得不额外添加一个锁；ReentrantLock可以同时绑定多个 Condition 对象，只需多次调用newCondition方法即可。
+
+> [Synchronize和ReentrantLock区别](https://juejin.im/post/5bc87409f265da0ad701da35#heading-3)
+
 ### synchronized 和 volatile的区别？
+
+* 使用方法不同：synchronized 用于修饰方法和代码块，而 volatile 只能用于修饰变量
+* volatile  能保证可见性（强制线程读取内存数据，不使用线程缓存），但不能保证原子性，比如 i++ 
+* synchronized 通过互斥方式保证原子性，同时也能保证可见性（Happens-before原则：一个锁的解锁 Happens-Before 于后续对这个锁的加锁，同步块内的修改对后续线程可见）
+* volatile 关键字修饰的变量不会被指令重排序优化
+* synchronized 会阻塞等待获取锁的线程，volatile 不会
+
+ [JAVA多线程之volatile 与 synchronized 的比较](https://www.cnblogs.com/hapjin/p/5492880.html)
 
 ### synchronized 同步代码块还有同步方法本质上锁住的是谁？为什么？
 
-### sleep\(\) 和 wait\(\) 的区别？
+锁的是当前对象。
 
-### 什么是乐观锁?
+Synchronized进过编译，会在同步块的前后分别形成monitorenter和monitorexit这个两个字节码指令。在执行monitorenter指令时，首先要尝试获取对象锁。如果这个对象没被锁定，或者当前线程已经拥有了那个对象锁，把锁的计算器加1，相应的，在执行monitorexit指令时会将锁计算器就减1，当计算器为0时，锁就被释放了。如果获取对象锁失败，那当前线程就要阻塞，直到对象锁被另一个线程释放为止。
 
-乐观锁：假设每次去拿数据都认为别人不会修改，所以不会上锁。但是在更新的时候会判断一下此期间别人有没有去更新这个数据。一般用在读比较多，写比较少的情况。
+> #### [Synchronize在编译时如何实现锁机制](https://juejin.im/post/5bc87409f265da0ad701da35#heading-12)
 
-悲观锁：假设每次都是最坏情况，每次去拿数据时别人都会修改，所以每次拿数据的时候都会上锁，这样别人想拿这个数据就会被阻塞直到它拿到锁，多写少读时使用。
+### sleep\(\) 、yield\(\) 和 wait\(\) 的区别？
 
-### Volatile 关键字作用
+* sleep\(\)不释放锁，wait\(\) 会释放
+* wait 只能在同步语境（synchronized 修饰的方法或代码块）中使用，而sleep不用
+* wait 是 Object 的实例方法，而 sleep 是Thread 类的静态方法
+* 调用 wait\(\)方法的线程可以被 notify、notifyAll 方法唤醒，而sleep 的线程不能，只能通过interrupt 中断，会抛出 InterruptedException
+* yield 只是通知调度器当前线程准备让出 CPU 资源，调度器可以重新进行调度，但调度器可以忽略这个提示，而且重新调度后，可能获取CPU 资源的还是当前线程（其他线程优先级低或者等待当前线程释放锁），yield 不会释放锁
 
-1. 强制CPU读取数据时不使用缓存，而是直接通过内存读取，可以保证可见性，不保证原子性
-2. 禁止编译器进行指令重排序
+> [\[译\]Java中Wait、Sleep和Yield方法的区别](https://www.jianshu.com/p/25e959037eed)
+
+### 乐观锁与悲观锁?
+
+乐观锁：每次读取数据都假设数据没有被修改，不会上锁。但是在写入数据的时候会判断一下此期间数据有没有被更新。一般用在读多写少的情况。
+
+悲观锁：每次拿数据时都假设别人都会修改，所以每次都会加锁，这样其他线程想读取数据就会被阻塞直到它拿到锁，多写少读时使用。
 
