@@ -181,7 +181,7 @@ Java 刚创建出来的 Thread 对象就是 NEW 状态，NEW 状态的线程，�
 * 使用方法不同：synchronized 用于修饰方法和代码块，而 volatile 只能用于修饰变量
 * volatile  能保证可见性（强制线程读取内存数据，不使用线程缓存），但不能保证原子性，比如 i++ 
 * synchronized 通过互斥方式保证原子性，同时也能保证可见性（Happens-before原则：一个锁的解锁 Happens-Before 于后续对这个锁的加锁，同步块内的修改对后续线程可见）
-* volatile 关键字修饰的变量不会被指令重排序优化
+* volatile 关键字修饰的变量不会被指令重排序优化（插入内存屏障指令）
 * synchronized 会阻塞等待获取锁的线程，volatile 不会
 
  [JAVA多线程之volatile 与 synchronized 的比较](https://www.cnblogs.com/hapjin/p/5492880.html)
