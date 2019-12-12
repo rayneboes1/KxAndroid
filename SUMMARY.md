@@ -5,7 +5,7 @@
   * [计算机组成原理](computer_science/ji-suan-ji-zu-cheng-yuan-li.md)
   * [算法](computer_science/algorithm/README.md)
     * [查找](computer_science/algorithm/search/README.md)
-      * [二分查找](computer_science/algorithm/search/binary_search.md)
+      * [二分查找及其变体](computer_science/algorithm/search/binary_search.md)
     * [排序](computer_science/algorithm/sort.md)
   * [数据结构](computer_science/datastructure/README.md)
     * [队列](computer_science/datastructure/queue/README.md)
