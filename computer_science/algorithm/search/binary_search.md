@@ -6,9 +6,9 @@
 /**
  * 二分查找
  * 
- * @param arr   无重复元素的 有序数组
+ * @param arr   无重复元素的有序数组(升序)
  * @param value 待查找目标值
- * @return 如果数组中存在值相等的元素，返回该元素下标否则返回-1
+ * @return 符合条件的元素下标，否则返回-1
  */
 public static int binarySearch(int[] arr, int value) {
     if (arr == null || arr.length == 0) {
@@ -38,9 +38,9 @@ public static int binarySearch(int[] arr, int value) {
 /**
  * 寻找第一个等于给定值的元素
  * 
- * @param arr 有重复元素的有序数组
+ * @param arr 有重复元素的有序数组（升序）
  * @param value 待查找目标值
- * @return 如果数组中存在值相等的元素，返回第一个等于该值元素下标，否则返回-1
+ * @return 符合条件的元素下标，否则返回-1
  */
 public static int binarySearchFirst(int[] arr, int value) {
     if (arr == null || arr.length == 0) {
@@ -72,7 +72,7 @@ public static int binarySearchFirst(int[] arr, int value) {
  * 寻找最后一个等于指定值的元素
  * @param arr 有重复元素的有序数组
  * @param value 待查找目标值
- * @return 如果数组中存在值相等的元素，返回最后一个等于该值元素下标，否则返回-1
+ * @return 符合条件的元素下标，否则返回-1
  */
 public static int binarySearchLast(int[] arr, int value) {
     if (arr == null || arr.length == 0) {
@@ -105,7 +105,7 @@ public static int binarySearchLast(int[] arr, int value) {
  * 
  * @param arr   有序数组
  * @param value 指定值
- * @return 第一个大于等于value的元素下标，否则返回-1
+ * @return 符合条件的元素下标，否则返回-1
  */
 public static int binarySeartchFirstNotLess(int[] arr, int value) {
     if (arr == null || arr.length == 0) {
@@ -135,7 +135,7 @@ public static int binarySeartchFirstNotLess(int[] arr, int value) {
  * 寻找最后一个小于等于指定值的元素
  * @param arr 有序数组（升序）
  * @param value 指定值
- * @return 符合条件的元素下标
+ * @return 符合条件的元素下标，否则返回-1
  */
 public static int binarySearchLastNotLarger(int[] arr, int value) {
     if (arr == null || arr.length == 0) {
