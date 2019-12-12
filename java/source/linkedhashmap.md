@@ -194,6 +194,41 @@ void afterNodeAccess(Node<K,V> e) { // move node to last
 }
 ```
 
+
+
+## 其他优化
+
+### containsValue\(\)
+
+LinkedHashMap 直接从头遍历双向链表查找， HashMap 遍历数组同时还要遍历每个桶内的链表，效率比LinkedHashMap 低。
+
+```java
+//LinkedHashMap 
+public boolean containsValue(Object value) {
+    for (LinkedHashMapEntry<K,V> e = head; e != null; e = e.after) {
+       V v = e.value;
+    if (v == value || (value != null && value.equals(v)))
+          return true;
+     }
+     return false;
+}
+
+//HashMap
+public boolean containsValue(Object value) {
+    Node<K,V>[] tab; V v;
+    if ((tab = table) != null && size > 0) {
+        for (int i = 0; i < tab.length; ++i) {
+            for (Node<K,V> e = tab[i]; e != null; e = e.next) {
+                if ((v = e.value) == value ||
+                        (value != null && value.equals(v)))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+```
+
 ## 总结
 
 LinkedHashMap 是一个拥有可预测迭代顺序的哈希表，它继承自 HashMap，并用一个双向链表来维护所有 entry 的顺序，默认迭代顺序是按节点插入顺序，可以通过将`accessOrder`设为`true`将迭代顺序指定为节点访问顺序。当节点被添加、修改、访问和删除时，通过调用对应的方法来调整节点在双向链表中的顺序，从而达到维护访问顺序的目的。
