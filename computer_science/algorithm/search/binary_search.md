@@ -1,4 +1,8 @@
-# 二分查找及其变体
+---
+description: 二分查找及其变体问题
+---
+
+# 二分查找
 
 ### 无重复元素查找
 
@@ -99,6 +103,8 @@ public static int binarySearchLast(int[] arr, int value) {
 
 ### 第一个大于等于指定值的元素
 
+针对升序数组。
+
 ```text
 /**
  * 寻找第一个大于等于指定值的元素
@@ -129,6 +135,8 @@ public static int binarySeartchFirstNotLess(int[] arr, int value) {
 ```
 
 ### 最后一个小于等于指定值的元素
+
+针对升序数组。
 
 ```text
 /**
