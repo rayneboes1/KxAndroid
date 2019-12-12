@@ -21,6 +21,8 @@
         * [获取中间结点](computer_science/datastructure/linked_list-1/xiang-guan-suan-fa-ti-mu/middl_node.md)
         * [反转链表](computer_science/datastructure/linked_list-1/xiang-guan-suan-fa-ti-mu/reverse_link.md)
   * [算法](computer_science/algorithm/README.md)
+    * [查找](computer_science/algorithm/search/README.md)
+      * [二分查找](computer_science/algorithm/search/binary_search.md)
     * [排序](computer_science/algorithm/sort.md)
 * [软件工程](software_engineering/README.md)
   * [编程思想](software_engineering/bian-cheng-si-xiang.md)
