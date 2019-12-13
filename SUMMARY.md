@@ -30,7 +30,6 @@
     * [哈希表](computer_science/datastructure/ha-xi-biao.md)
     * [堆](computer_science/datastructure/dui.md)
     * [树](computer_science/datastructure/shu/README.md)
-      * [基本概念](computer_science/datastructure/shu/ji-ben-gai-nian.md)
       * [二叉树](computer_science/datastructure/shu/er-cha-shu.md)
       * [二叉查找树](computer_science/datastructure/shu/er-cha-cha-zhao-shu.md)
       * [AVL 树](computer_science/datastructure/shu/avl-shu.md)
