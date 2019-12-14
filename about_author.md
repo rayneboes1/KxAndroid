@@ -1,6 +1,12 @@
+---
+description: 你好啊，远方的朋友。
+---
+
 # 关于作者
 
-### 公众号
+## 我是谁 <a id="who_is_me"></a>
+
+## 其他作品 <a id="other_work"></a>
 
 我在业余时间运营了两个公众号。
 
@@ -14,19 +20,19 @@
 
 
 
-### 工作机会
+## 工作机会 <a id="job_wanted"></a>
 
-可扫描小程序码获取我的个人简历。
+可扫描小程序码获取我的个人简历和联系方式。
 
-![](.gitbook/assets/gh_b323fda7aa36_344.jpg)
+![&#x6211;&#x7684;&#x7B80;&#x5386;&#x5C0F;&#x7A0B;&#x5E8F;](.gitbook/assets/gh_b323fda7aa36_344.jpg)
 
-### 赞赏
+## 赞赏 <a id="reward"></a>
 
-如果你觉得我的整理对你有帮助，可以选择赞赏，激励我做的更好，感谢！  
+如果你觉得我的整理对你有帮助，可以通过赞赏激励我做的更好，感谢！  
 
 
 
-![&#x652F;&#x4ED8;&#x5B9D;](.gitbook/assets/img_5681.JPG)
+![&#x6211;&#xFF0C;&#x652F;&#x4ED8;&#x5B9D;&#xFF0C;&#x6253;&#x94B1;&#xFF01;](.gitbook/assets/img_5681.JPG)
 
-![&#x5FAE;&#x4FE1;](.gitbook/assets/img_5680.JPG)
+![&#x6211;&#xFF0C;&#x5FAE;&#x4FE1;&#xFF0C;&#x6253;&#x94B1;&#xFF01;](.gitbook/assets/img_5680.JPG)
 
