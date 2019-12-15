@@ -1,21 +1,19 @@
 # HashMap
 
-## HashMap 原理
-
-### 定义
+## 定义
 
 > Hash table based implementation of the Map interface. This implementation provides all of the optional map operations, and permits null values and the null key. \(The HashMap class is roughly equivalent to Hashtable, except that it is unsynchronized and permits nulls.\) This class makes no guarantees as to the order of the map; in particular, it does not guarantee that the order will remain constant over time.
 
 关键描述：基于Map接口实现、允许null键/值、非同步、不保证有序\(比如插入的顺序\)、也不保证key的顺序序不随时间变化。
 
-### 两个重要参数
+## 两个重要参数
 
 * initialCapacity 哈希表底层数组的初始化容量，默认为 16
 * loadFactor 负载因子，衡量数组填满程度，当hashmap中元素个数超过 Capacity\*loadFactor 时，数组容量会扩充为原来的 2 倍 
 
 > 即使初始化时指定了非2的幂次的容量，内部也会将其变为2的幂次。
 
-### put 函数的实现
+## put 函数的实现
 
 put 方法大致的思路为：
 
@@ -100,7 +98,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
 }
 ```
 
-### get 函数的实现
+## get 函数的实现
 
 1. 计算hash 和索引， 去找数组里的第一个节点，如果不冲突，直接命中；
 2. 如果有冲突，则通过key.equals\(k\)去查找对应的entry。若为树，则在树中通过key.equals\(k\)查找，O\(logn\)；若为链表，则在链表中通过key.equals\(k\)查找，O\(n\)。
@@ -142,7 +140,7 @@ final Node<K,V> getNode(int hash, Object key) {
 }
 ```
 
-### hash 函数的实现
+## hash 函数的实现
 
 将 key 的 hashCode 高16bit不变，低16bit和高16bit做了一个异或。
 
@@ -161,13 +159,13 @@ static final int hash(Object key) {
 
 在 n 比较小的时候，只有hashCode 的低位参与哈希，碰撞的概率很大，而通过这种简单的方式，可以让 hashCode 的高位也参与 hash，有效避免哈希冲突，同时也不会影响性能；而对于哈希冲突过于严重的情况采用链表及红黑树\(JDK1.8\)来处理。
 
-### resize 函数的实现
+## resize 函数的实现
 
 当put时，如果发现目前的bucket占用程度已经超过了Load Factor所希望的比例，那么就会发生resize。在resize的过程，简单的说就是把bucket扩充为2倍，之后重新计算index，把节点再放到新的bucket中。
 
 由于使用的是2次幂的扩展\(指长度扩为原来2倍\)，所以，元素的位置要么是在原位置，要么是在原位置再移动2次幂的位置。
 
-例如如果n由16变为32时，n-1由`1111`变为`11111`，假设有两个计算好的 hash,hash1 的低五位为 01001，hash2的低五位为11001，当n=16时，两个hash计算的索引都是`1001&1111=1001`,而当n变成32后，hash1对应的index 为`01001&11111=1001(b)=9(d)`,而hash2对应的index为`11001&11111=11001=25=9+16`,向后移动的位置等于原来的容量。
+例如，如果n由16变为32时，n-1由`1111`变为`11111`，假设有两个计算好的 hash,hash1 的低五位为 01001，hash2的低五位为11001，当n=16时，两个hash计算的索引都是`1001&1111=1001`,而当n变成32后，hash1对应的index 为`01001&11111=1001(b)=9(d)`,而hash2对应的index为`11001&11111=11001=25=9+16`,向后移动的位置等于原来的容量。
 
 因此，我们在扩充HashMap的时候，不需要重新计算hash，只需要**看看原来的hash值新增的那个bit是1还是0就好了，是0的话索引没变，是1的话索引变成“原索引+oldCap”。**
 
@@ -263,21 +261,17 @@ final Node<K,V>[] resize() {
 }
 ```
 
-### 小结
+## 总结
 
 HashMap 以Entry\[\]数组实现的哈希桶数组，用Key的哈希值取模桶数组的大小可得到数组下标。
 
-插入元素时，如果两条Key落在同一个桶（比如哈希值1和17取模16后都属于第一个哈希桶），我们称之为哈希冲突。
-
-JDK8之前的做法是链表法，Entry用一个next属性实现多个Entry以单向链表存放。查找哈希值为17的key时，先定位到哈希桶，然后链表遍历桶里所有元素，逐个比较其Hash值然后key值。
+插入元素时，如果两条Key落在同一个桶（比如哈希值1和17取模16后都属于第一个哈希桶），我们称之为哈希冲突。JDK 8之前的解决哈希冲突的做法是链表法，Entry 用一个next属性实现多个Entry以单向链表存放。查找哈希值为17的key时，先定位到哈希桶，然后链表遍历桶里所有元素，逐个比较其Hash值然后key值。
 
 在JDK8里，新增默认为8的阈值，当一个桶里的Entry超过閥值，就不以单向链表而以红黑树来存放以加快Key的查找速度。
 
 当然，最好还是桶里只有一个元素，不用去比较。所以默认当Entry数量达到桶数量的75%时，哈希冲突已比较严重，就会成倍扩容桶数组，并重新分配所有原来的Entry。扩容成本不低，所以也最好有个预估值。
 
 取模用与操作（hash & （arrayLength-1））会比较快，所以数组的大小永远是2的N次方， 你随便给一个初始值比如17会转为32。默认第一次放入元素时的初始值是16。
-
-iterator（）时顺着哈希桶数组来遍历，看起来是个乱序。
 
 ## 参考
 
