@@ -59,6 +59,7 @@
   * [JVM](java/jvm.md)
   * [源码与原理](java/source/README.md)
     * [HashMap](java/source/hashmap.md)
+    * [ThreadLocal](java/source/threadlocal.md)
     * [LinkedHashMap](java/source/linkedhashmap.md)
   * [各版本主要特性](java/version_feature.md)
 * [Android](android/README.md)
