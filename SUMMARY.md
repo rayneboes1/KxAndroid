@@ -79,7 +79,7 @@
   * [动画](android/animation.md)
   * [线程和进程](android/xian-cheng-he-jin-cheng.md)
   * [内部原理](android/nei-bu-yuan-li/README.md)
-    * [消息机制](android/nei-bu-yuan-li/xiao-xi-ji-zhi.md)
+    * [消息循环机制](android/nei-bu-yuan-li/xiao-xi-ji-zhi.md)
     * [App 启动流程](android/nei-bu-yuan-li/app-qi-dong-liu-cheng.md)
   * [性能优化](android/xing-neng-you-hua.md)
   * [架构](android/jia-gou/README.md)
