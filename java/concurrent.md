@@ -85,7 +85,7 @@ public interface Callable<V> {
 
 ![&#x5E76;&#x53D1;&#x793A;&#x610F;&#x56FE;](../.gitbook/assets/image%20%284%29.png)
 
-![&#x5E76;&#x884C;&#x793A;&#x610F;&#x56FE;](../.gitbook/assets/image%20%2811%29.png)
+![&#x5E76;&#x884C;&#x793A;&#x610F;&#x56FE;](../.gitbook/assets/image%20%2812%29.png)
 
  [深入理解并发 / 并行，阻塞 / 非阻塞，同步 / 异步](https://juejin.im/entry/58ae4636b123db0052b1caf8)
 

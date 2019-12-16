@@ -2,15 +2,7 @@
 
 ## Activity 的生命周期
 
-### onStart\(\)和onResume\(\)的区别？
-
-### onPause\(\)和onStop\(\)的区别？
-
-### Activity A启动另一个Activity B会回调哪些方法？如果Activity B是完全透明呢？如果启动的是一个Dialog呢？
-
-### 谈谈onSaveInstanceState\(\)方法？何时会调用？
-
-### onSaveInstanceState\(\)与onPause\(\)的区别？
+### 
 
 ## 如何避免配置改变时Activity重建？
 
