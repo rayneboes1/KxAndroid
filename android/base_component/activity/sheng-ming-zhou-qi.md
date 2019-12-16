@@ -50,3 +50,11 @@ Activity 的 onSaveInstanceState 的默认实现会调用 View 的onSaveInstance
 
 onPause\(\)是Activity生命周期的一部分，是明确会被调用的方法，而onSaveInstanceState方法并不能保证系统会调用，因此只应该利用它来记录 Activity 的瞬态（UI 的状态）；存储持久性数据应在 [`onPause()`](https://developer.android.com/reference/android/app/Activity.html?hl=zh-CN#onPause%28%29) 方法中进行。
 
+## 其他问题
+
+### 如何避免配置改变时 Activity 重建？（自行处理运行时配置变更）
+
+在清单文件中编辑相应的 [`<activity>`](https://developer.android.com/guide/topics/manifest/activity-element.html?hl=zh-CN) 元素，增加 [`android:configChanges`](https://developer.android.com/guide/topics/manifest/activity-element.html?hl=zh-CN#config) 属性，该属性的值表示要处理的配置。最常用的值包括 `"orientation"`、`"screenSize"` 和 `"keyboardHidden"`。**`"orientation"` 值可在屏幕方向发生变更时阻止重启。`"screenSize"` 值也可在屏幕方向发生变更时阻止重启，但仅适用于 Android 3.2（API 级别 13）及以上版本的系统**。若想在应用中手动处理配置变更，必须在 `android:configChanges` 属性中声明 `"orientation"` 和 `"screenSize"` 值。可以在属性中声明多个配置值，方法是用`|` 字符将其进行分隔。
+
+这样当其中某个配置发生变化，Activity 也不会重启。但会接收到对 [`onConfigurationChanged()`](https://developer.android.com/reference/android/app/Activity?hl=zh-CN#onconfigurationchanged) 的调用消息。此方法会收到传递的 [`Configuration`](https://developer.android.com/reference/android/content/res/Configuration.html?hl=zh-CN) 对象，从而指定新设备配置。可以通过读取 [`Configuration`](https://developer.android.com/reference/android/content/res/Configuration.html?hl=zh-CN) 中的字段确定新配置，然后通过更新界面所用资源进行适当的更改。调用此方法时，Activity 的 [`Resources`](https://developer.android.com/reference/android/content/res/Resources.html?hl=zh-CN) 对象会相应地进行更新，并根据新配置返回资源，以便在系统不重启 Activity 的情况下轻松重置界面元素。
+
