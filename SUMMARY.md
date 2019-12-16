@@ -66,6 +66,7 @@
   * [基础组件](android/base_component/README.md)
     * [Activity](android/base_component/activity/README.md)
       * [生命周期](android/base_component/activity/sheng-ming-zhou-qi.md)
+      * [启动模式](android/base_component/activity/qi-dong-mo-shi.md)
     * [Service](android/base_component/service.md)
     * [ContentProvider](android/base_component/contentprovider.md)
     * [BroadcastReceiver](android/base_component/broadcastreceiver.md)
