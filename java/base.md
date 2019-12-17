@@ -196,5 +196,17 @@ System.out.println(g.equals(a+h)); //true,a+h 类型提升后为long
 
  [面试官爱问的equals与hashCode](https://juejin.im/post/5a4379d4f265da432003874c)
 
+### 深拷贝与浅拷贝
+
+浅拷贝：拷贝对象的时候，只对基本数据类型进行了拷贝，而对引用数据类型只是进行了引用的传递，而没有真实的创建一个新的对象
+
+深拷贝：复制对象时，对引用数据类型进行拷贝的时候，创建了一个新的对象，并且复制其内的成员变量。
+
+Java 中Object类有一个clone方法，但是类想要支持 clone 操作需要实现 Cloneable 接口。Object 的 clone 方法默认实现的浅拷贝。
+
+实现深拷贝需要对引用类型的变量调用对应的clone 方法，进行递归clone，直到只包含基本类型为止。
+
+
+
 
 
