@@ -68,11 +68,9 @@ if (logging != null) {
 
 在一个子线程中不断向主线程发送消息，消息的callback 就是更新某个变量的值，停止一段时间后对该值进行检查，如果变量的值还是上一次的值，则说明主线程已经出现卡顿或ANR了。
 
-{% embed url="https://www.jianshu.com/p/a7dfac037c4c" %}
-
-
-
 ## 参考
 
 [使应用能迅速响应](https://developer.android.com/training/articles/perf-anr?hl=zh-CN)
+
+[Android UI 卡顿及ANR检测原理](https://www.jianshu.com/p/a7dfac037c4c)
 
