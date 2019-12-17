@@ -38,6 +38,7 @@ Activity 实例复用时调用。
 
 * FLAG\_ACTIVITY\_EXCLUDE\_FROM\_RECENTS：具有该标记的Activity不会出现在历史Activity的列表中，即无法通过历史列表回到该Activity上
 * FLAG\_ACTIVITY\_NO\_ANIMATION：不使用动画
+* ....
 
 通过Intent 设置的启动模式标记位优先于清单中设置的标记位。
 
