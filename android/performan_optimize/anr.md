@@ -23,6 +23,53 @@
 
 ## ANR 检测
 
+### StrictMode 
+
+可以支持设置线程策略和虚拟机策略，在开发过程中使用。
+
+#### 线程策略 ThreadPolicy
+
+* detectCustomSlowCalls：检测自定义耗时操作
+* detectDiskReads：检测是否存在磁盘读取操作
+* detectDiskWrites：检测是否存在磁盘写入操作
+* detectNetWork：检测是否存在网络操作
+
+#### 虚拟机策略VmPolicy
+
+* detectActivityLeaks：检测是否存在Activity泄露
+* detectLeakedClosableObjects：检测是否存在未关闭的Closeable对象泄露
+* detectLeakedSqlLiteObjects：检测是否存在Sqlite对象泄露
+* setClassInstanceLimit：检测类实例个数是否超过限制
+
+### 其他工具
+
+#### BlockCanary
+
+在 Looper 的 loop 方法里有如下代码：
+
+```text
+.....
+final Printer logging = me.mLogging;
+if (logging != null) {
+    logging.println(">>>>> Dispatching to " + msg.target + " " +
+                msg.callback + ": " + msg.what);
+}
+....
+msg.target.dispatchMessage(msg);
+...
+if (logging != null) {
+    logging.println("<<<<< Finished to " + msg.target + " " + msg.callback);
+}
+```
+
+而 Looper 提供了 setMessageLogging 方法设置logging，通过给Looper设置自定义logging，记录消息处理前后时间戳，计算消息处理耗时，如果过长则说明出现了ANR。
+
+#### ANR-watchDog
+
+在一个子线程中不断向主线程发送消息，消息的callback 就是更新某个变量的值，停止一段时间后对该值进行检查，如果变量的值还是上一次的值，则说明主线程已经出现卡顿或ANR了。
+
+{% embed url="https://www.jianshu.com/p/a7dfac037c4c" %}
+
 
 
 ## 参考
