@@ -72,7 +72,7 @@ if (logging != null) {
 
 Android系统从4.1\(API 16\)开始加入 Choreographer 这个类来控制同步处理输入\(Input\)、动画\(Animation\)、绘制\(Draw\)三个UI操作。UI显示每一帧时要完成的事情只有这三种。
 
-![&#x4E22;&#x5E27;](../../.gitbook/assets/image%20%283%29.png)
+![&#x4E22;&#x5E27;](../../.gitbook/assets/image%20%284%29.png)
 
 Choreographer 接收显示系统的时间脉冲\(垂直同步信号-VSync信号\)，在下一个frame渲染时控制执行这些操作。  
 通过`Choreographer.getInstance().postFrameCallback(new FPSFrameCallback())`把自定义回调添加到Choreographer之中，那么在下一个frame被渲染的时候就会回调callback.

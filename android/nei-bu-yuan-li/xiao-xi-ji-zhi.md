@@ -4,7 +4,7 @@
 
 Android 消息循环主要涉及Looper、Handler、MessageQueue和Message 四个类，他们之间的关系如下图所示：
 
-![Android &#x6D88;&#x606F;&#x673A;&#x5236;&#x56FE;](../../.gitbook/assets/image%20%2812%29.png)
+![Android &#x6D88;&#x606F;&#x673A;&#x5236;&#x56FE;](../../.gitbook/assets/image%20%2814%29.png)
 
 简单总结就是：`Message` 由 `Handler` 发送，按照发生时间升序保存在 `MessageQueue` 中，然后 `Looper` 不断从 `MessageQueue` 中取出下一条待处理的 `Message` ，并通知发送它的 `Handler` 进行处理。 
 
@@ -82,7 +82,7 @@ private boolean enqueueMessage(MessageQueue queue, Message msg, long uptimeMilli
 
  提供了 dispatchMessage\(Message msg\) 方法用于处理消息，具体逻辑如下：
 
-![Handler &#x7684; dispatchMessage &#x6D41;&#x7A0B;](../../.gitbook/assets/image%20%281%29.png)
+![Handler &#x7684; dispatchMessage &#x6D41;&#x7A0B;](../../.gitbook/assets/image%20%282%29.png)
 
 对应源码：
 
@@ -103,7 +103,7 @@ public void dispatchMessage(Message msg) {
 
 ### 各个类和方法调用关系图
 
-![&#x6D88;&#x606F;&#x5FAA;&#x73AF;&#x6D89;&#x53CA;&#x7684;&#x7C7B;&#x548C;&#x65B9;&#x6CD5;&#x4EE5;&#x53CA;&#x8C03;&#x7528;&#x5173;&#x7CFB;](../../.gitbook/assets/image%20%2821%29.png)
+![&#x6D88;&#x606F;&#x5FAA;&#x73AF;&#x6D89;&#x53CA;&#x7684;&#x7C7B;&#x548C;&#x65B9;&#x6CD5;&#x4EE5;&#x53CA;&#x8C03;&#x7528;&#x5173;&#x7CFB;](../../.gitbook/assets/image%20%2823%29.png)
 
 ## 主线程 Looper 设置
 
