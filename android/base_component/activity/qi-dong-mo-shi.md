@@ -1,4 +1,4 @@
-# 启动模式
+# 启动模式与任务栈
 
 ## Activity 的四种启动模式？
 
@@ -13,7 +13,7 @@
 
 singleTop 是当要启动的Activity 在当前任务栈顶有实例时会复用并调用onNewIntent方法，适用于重复事件的落地页，比如通知详情。
 
-singTask 是
+singTask 单独任务栈，比如浏览器。
 
 ## onNewIntent\(\)调用时机？
 
@@ -31,7 +31,7 @@ Activity 实例复用时调用。
 ### 通过 Intent.addFlags\(\) 设置
 
 * FLAG\_ACTIVITY\_SINGLE\_TOP:同 singleTop
-* FLAG\_ACTIVITY\_NEW\_TASK：创建新的任务栈（如果通过taskAffinity指定的任务栈不存在的话）
+* FLAG\_ACTIVITY\_NEW\_TASK：同 singleTask
 * FLAG\_ACTIVITY\_CLEAR\_TOP：将 Activity 上面的其他 Activity 出栈,如果同时指定
 
   FLAG\_ACTIVITY\_SINGLE\_TOP 则会复用，否则会重建
@@ -41,6 +41,8 @@ Activity 实例复用时调用。
 * ....
 
 通过Intent 设置的启动模式标记位优先于清单中设置的标记位。
+
+[官方文档](https://developer.android.google.cn/guide/components/activities/tasks-and-back-stack)
 
 
 
