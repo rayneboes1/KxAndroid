@@ -48,11 +48,12 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
 @Override
 public boolean dispatchTouchEvent(MotionEvent ev) {
     //....
+    
     boolean handled = false;
     final int action = ev.getAction();
     final int actionMasked = action & MotionEvent.ACTION_MASK;
 
-    // Handle an initial down.清除之前状态
+    // 如果是 down 事件，清除之前状态
     if (actionMasked == MotionEvent.ACTION_DOWN) {
         // Throw away all previous state when starting a new touch gesture.
         // The framework may have dropped the up or cancel event for the previous gesture
@@ -62,6 +63,7 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
     } 
     // 检查是否需要拦截
     final boolean intercepted;
+    
     //如果是down事件或者前面事件已经有子view接收，需要重新判断是否需要拦截
     if (actionMasked == MotionEvent.ACTION_DOWN
             || mFirstTouchTarget != null) {      
@@ -75,7 +77,7 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
             intercepted = false;
         }
     } else {
-        // 不是down事件，并且也没有其他子view处理过之前的事件
+        //不是down事件，并且也没有其他子view处理过之前的事件
         //则ViewGroup自己拦截处理
         intercepted = true;
     }
@@ -84,48 +86,164 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
                 || actionMasked == MotionEvent.ACTION_CANCEL;
     
     TouchTarget newTouchTarget = null;
+    //是否已由新目标处理事件
     boolean alreadyDispatchedToNewTouchTarget = false;
     //....
+    
     if (!canceled && !intercepted) {
+        //只针对这三种事件寻找View，其他情况一律由之前的目标处理
         if (actionMasked == MotionEvent.ACTION_DOWN
                 || (split && actionMasked == MotionEvent.ACTION_POINTER_DOWN)
                 || actionMasked == MotionEvent.ACTION_HOVER_MOVE) {
+                
                 final int childrenCount = mChildrenCount;
                 if (newTouchTarget == null && childrenCount != 0) {
                     final float x = ev.getX(actionIndex);
                     final float y = ev.getY(actionIndex);
+                    //按照z轴坐标以及自定义绘制顺序（如果有的话）排列子view
                     final ArrayList<View> preorderedList = buildTouchDispatchChildList();
                     final boolean customOrder = preorderedList == null
                                 && isChildrenDrawingOrderEnabled();
                     final View[] children = mChildren;
                     for (int i = childrenCount - 1; i >= 0; i--) {
+                        //获取view在列表中的索引
                         final int childIndex = getAndVerifyPreorderedIndex(
                                 childrenCount, i, customOrder);
                         final View child = getAndVerifyPreorderedView(
                                 preorderedList, children, childIndex);
+                        //检查事件发生位置是否在View内以及View是否可以接受事件        
                         if (!canViewReceivePointerEvents(child)
                                 || !isTransformedTouchPointInView(x, y, child, null)) {
                             ev.setTargetAccessibilityFocus(false);
                             continue;
                         }
+                        
+                        //此时找到了事件发生在区域内且可以接收事件的view
 
+                        //在 touchTarget 链表中寻找 View对应的TouchTarget
                         newTouchTarget = getTouchTarget(child);
                         if (newTouchTarget != null) {
+                            //view 已经在接受事件了
                             // Child is already receiving touch within its bounds.
                             // Give it the new pointer in addition to the ones it is handling.
                             newTouchTarget.pointerIdBits |= idBitsToAssign;
                             break;
                         }
-                
-        }
-        
-    
-    }
-    
-       
-
+                        //没有找到对应target，先分发事件给 view
+                        if (dispatchTransformedTouchEvent(ev, false, child, idBitsToAssign)) {
+                            // View 的 dispatchTouchEvent 返回了true
+                            mLastTouchDownTime = ev.getDownTime();
+                            if (preorderedList != null) {
+                                // 找到在mChildren中的真实索引
+                                for (int j = 0; j < childrenCount; j++) {
+                                    if (children[childIndex] == mChildren[j]) {
+                                        mLastTouchDownIndex = j;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                mLastTouchDownIndex = childIndex;
+                            }
+                            mLastTouchDownX = ev.getX();
+                            mLastTouchDownY = ev.getY();
+                            //添加新的TouchTarget
+                            newTouchTarget = addTouchTarget(child, idBitsToAssign);
+                            alreadyDispatchedToNewTouchTarget = true;
+                            break;
+                         }
+                     }//end for
+                     if (preorderedList != null) preorderedList.clear();
+                 }//end if
+                 if (newTouchTarget == null && mFirstTouchTarget != null) {
+                    // Did not find a child to receive the event.
+                    // Assign the pointer to the least recently added target.
+                    newTouchTarget = mFirstTouchTarget;
+                    while (newTouchTarget.next != null) {
+                        newTouchTarget = newTouchTarget.next;
+                    }
+                    newTouchTarget.pointerIdBits |= idBitsToAssign;
+                }
+            }//end if
+            
+            // Dispatch to touch targets.
+            if (mFirstTouchTarget == null) {
+                //调用父类的 dispatchToucheEvent
+                handled = dispatchTransformedTouchEvent(ev, canceled, null,
+                        TouchTarget.ALL_POINTER_IDS);
+            } else {
+                // Dispatch to touch targets, excluding the new touch target if we already
+                // dispatched to it.  Cancel touch targets if necessary.
+                TouchTarget predecessor = null;
+                TouchTarget target = mFirstTouchTarget;
+                while (target != null) {
+                    final TouchTarget next = target.next;
+                    if (alreadyDispatchedToNewTouchTarget && target == newTouchTarget) {
+                        //Down 事件时走到这里
+                        handled = true;
+                    } else {
+                        final boolean cancelChild = resetCancelNextUpFlag(target.child)
+                                || intercepted;
+                        //其他事件走到这里        
+                        if (dispatchTransformedTouchEvent(ev, cancelChild,
+                                target.child, target.pointerIdBits)) {
+                            handled = true;
+                        }
+                        if (cancelChild) {
+                            if (predecessor == null) {
+                                mFirstTouchTarget = next;
+                            } else {
+                                predecessor.next = next;
+                            }
+                            target.recycle();
+                            target = next;
+                            continue;
+                        }
+                    }
+                    predecessor = target;
+                    target = next;
+                }//end while
+            }//end else                              
+        }//end if    
+    return handled; 
 }
 ```
+
+## View
+
+```text
+public boolean dispatchTouchEvent(MotionEvent event) {
+    boolean result = false;
+    if (onFilterTouchEventForSecurity(event)) {
+        if ((mViewFlags & ENABLED_MASK) == ENABLED && handleScrollBarDragging(event)) {
+            result = true;
+        }
+        
+        ListenerInfo li = mListenerInfo;
+        if (li != null && li.mOnTouchListener != null
+                && (mViewFlags & ENABLED_MASK) == ENABLED
+                && li.mOnTouchListener.onTouch(this, event)) {
+            //设置了onTouchListener/enable/onTouch返回true
+            //直接返回
+            result = true;
+        }
+
+        if (!result && onTouchEvent(event)) {
+            result = true;
+        }
+    }
+    return result;
+}
+```
+
+onTouchEvent\(event\) 中会调用onClick 和 onLongClick。
+
+调用onClick 是在UP事件时，检查是否clickable以及是否设置监听；
+
+调用onLongClick 是在Down 事件时，发出一个延时任务，如果任务执行时还是按下状态，就执行难onLongClick.
+
+//todo 源码
+
+## 相关问题
 
 事件传递大体过程：Activity--&gt; Window--&gt;DecorView --&gt; View树从上往下，传递过程中谁想拦截就拦截自己处理。MotionEvent是Android中的点击事件。主要事件类型：
 
@@ -153,9 +271,11 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
 }
 ```
 
-* * Q：如何解决View的滑动冲突？
-  * Q：谈一谈View的工作原理？
-  * **onTouch\(\)、onTouchEvent\(\)和onClick\(\)关系？**
+### 如何解决View的滑动冲突？
 
-    如果一个View需要处理事件，它设置了OnTouchListener，那么OnTouchListener的onTouch方法会被回调。如果onTouch返回false,则onTouchEvent会被调用，反之不会。在onTouchEvent方法中，事件为Action.UP的时候会回调OnClickListener的onClick方法，可见OnClickListener的优先级很低。
+父类根据需要重写 onIntercept 或者子View根据需要调用requestDisallowIntercept
+
+### onTouch\(\)、onTouchEvent\(\)和onClick\(\)关系？
+
+如果一个View需要处理事件，它设置了OnTouchListener，那么OnTouchListener的onTouch方法会被回调。如果onTouch返回false,则onTouchEvent会被调用，反之不会。在onTouchEvent方法中，事件为Action.UP的时候会回调OnClickListener的onClick方法，可见OnClickListener的优先级很低。
 
