@@ -243,6 +243,14 @@ onTouchEvent\(event\) 中会调用onClick 和 onLongClick。
 
 //todo 源码
 
+## 多点触控
+
+处理POINTER\_DOWN 和POINTER\_UP，进行指针处理
+
+##  滑动冲突
+
+父类根据需要重写 onIntercept 或者子View根据需要调用requestDisallowIntercept.
+
 ## 相关问题
 
 事件传递大体过程：Activity--&gt; Window--&gt;DecorView --&gt; View树从上往下，传递过程中谁想拦截就拦截自己处理。MotionEvent是Android中的点击事件。主要事件类型：
