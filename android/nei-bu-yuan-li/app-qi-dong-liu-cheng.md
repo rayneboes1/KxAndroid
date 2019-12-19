@@ -19,7 +19,7 @@
 
 {% embed url="https://www.jianshu.com/p/a5532ecc8377" %}
 
-
+[http://gityuan.com/2016/10/09/app-process-create-2/](http://gityuan.com/2016/10/09/app-process-create-2/)
 
 1. 2. Launcher startActivity
 3. AMS startActivity
