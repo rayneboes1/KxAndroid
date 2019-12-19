@@ -287,3 +287,26 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
 
 如果一个View需要处理事件，它设置了OnTouchListener，那么OnTouchListener的onTouch方法会被回调。如果onTouch返回false,则onTouchEvent会被调用，反之不会。在onTouchEvent方法中，事件为Action.UP的时候会回调OnClickListener的onClick方法，可见OnClickListener的优先级很低。
 
+### 防止短时间内重复点击
+
+通过在对比两次`ACTION_DOWN`事件之间的时间间隔是否小于最小间隔，如果小于直接忽略。
+
+```text
+private static final long CLICK_DURATION = 900;
+
+//上次 ACTION_DOWN 事件发生时间
+private long lastDownTime = 0;
+
+@Override
+public boolean dispatchTouchEvent(MotionEvent event) {
+    if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+        boolean ignore = event.getDownTime() - lastDownTime < CLICK_DURATION;
+        lastDownTime = event.getDownTime();
+        if (ignore) {
+            return false;
+        }
+    }
+    return super.dispatchTouchEvent(event);
+}
+```
+
