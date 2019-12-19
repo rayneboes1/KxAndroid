@@ -75,7 +75,7 @@
     * [Fragment](android/base_component/fragment.md)
     * [View](android/base_component/view/README.md)
       * [事件分发](android/base_component/view/shi-jian-fen-fa.md)
-      * [绘制原理](android/base_component/view/hui-zhi-yuan-li.md)
+      * [绘制流程](android/base_component/view/hui-zhi-yuan-li.md)
       * [自定义 View](android/base_component/view/zi-ding-yi-view.md)
       * [Window](android/base_component/view/window.md)
   * [数据存储](android/data.md)
