@@ -90,6 +90,7 @@
     * [App 启动流程](android/nei-bu-yuan-li/app-qi-dong-liu-cheng.md)
   * [性能优化](android/performan_optimize/README.md)
     * [内存泄漏](android/performan_optimize/nei-cun-xie-lou.md)
+    * [启动优化](android/performan_optimize/qi-dong-you-hua.md)
     * [缩减包大小](android/performan_optimize/suo-jian-bao-da-xiao.md)
     * [ANR](android/performan_optimize/anr.md)
   * [架构](android/jia-gou/README.md)
