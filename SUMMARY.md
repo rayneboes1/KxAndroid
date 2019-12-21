@@ -42,7 +42,7 @@
       * [红黑树](computer_science/datastructure/shu/red_black_tree.md)
     * [图](computer_science/datastructure/tu.md)
   * [网络](computer_science/wang-luo/README.md)
-    * [TCP/IP](computer_science/wang-luo/tcp-ip.md)
+    * [TCP](computer_science/wang-luo/tcp.md)
     * [DNS](computer_science/wang-luo/dns.md)
     * [HTTP](computer_science/wang-luo/http.md)
     * [输入网址后发生了什么](computer_science/wang-luo/shu-ru-wang-zhi-hou-fa-sheng-le-shen-me.md)
