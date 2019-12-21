@@ -24,11 +24,3 @@
   * Q：HTTP和Socket的区别?
   * Q：在地址栏打入[http://www.baidu.com会发生什么](http://www.baidu.com会发生什么)？
 
-## Https
-
-### 与 HTTP 区别
-
-### TLS 握手过程
-
-### 抓包工具原理
-
