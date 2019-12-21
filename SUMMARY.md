@@ -97,6 +97,7 @@
     * [内存泄漏](android/performan_optimize/nei-cun-xie-lou.md)
     * [启动优化](android/performan_optimize/qi-dong-you-hua.md)
     * [缩减包大小](android/performan_optimize/suo-jian-bao-da-xiao.md)
+    * [布局优化](android/performan_optimize/bu-ju-you-hua.md)
     * [ANR](android/performan_optimize/anr.md)
   * [架构](android/jia-gou/README.md)
     * [Android 系统架构](android/jia-gou/android-xi-tong-jia-gou.md)
