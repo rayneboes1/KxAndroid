@@ -291,6 +291,8 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
 
 通过在对比两次`ACTION_DOWN`事件之间的时间间隔是否小于最小间隔，如果小于直接忽略。
 
+视应用范围，这段逻辑可以放在View/ViewGroup/Activity 中 。
+
 ```text
 private static final long CLICK_DURATION = 900;
 
