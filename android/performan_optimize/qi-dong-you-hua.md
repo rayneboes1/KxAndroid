@@ -6,3 +6,7 @@
 
 启动时，避免I/O操作，反序列化，网络操作，布局嵌套等耗时操作。
 
+优化MultiDex:
+
+[今日头条启动很快，你觉得可能是做了哪些优化？](https://mp.weixin.qq.com/s/X42VoeIWUv3kaEo8nCTkvg)
+
