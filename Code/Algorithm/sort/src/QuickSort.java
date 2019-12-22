@@ -13,8 +13,8 @@ public class QuickSort implements ISort {
             return;
         }
         int p = partition(arr, start, end);
-        //注意边界是 p-1 和 p+1,因为中间元素的最终位置已确定
-        quickSortRecur(arr, start, p-1);
+        // 注意边界是 p-1 和 p+1,因为中间元素的最终位置已确定
+        quickSortRecur(arr, start, p - 1);
         quickSortRecur(arr, p + 1, end);
     }
 
@@ -22,10 +22,13 @@ public class QuickSort implements ISort {
         int pivot = arr[t];
 
         int i = s;
-        //注意边界 j<t,是把最后一个元素之前的元素与其进行比较
+        // 注意边界 j<t,是把最后一个元素之前的元素与其进行比较
         for (int j = s; j < t; j++) {
             if (arr[j] < pivot) {
-                Util.swap(arr, j, i);
+                if (i != j) {
+                    //不相等时才交换
+                    Util.swap(arr, j, i);
+                }
                 i++;
             }
         }
