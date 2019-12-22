@@ -6,13 +6,16 @@ import java.util.Arrays;
 public class LookChange {
 
     public static void main(String[] args) {
-        int[] coins = {1, 3, 5};
-        int result = new LookChange().solution(coins, 9);
+        int[] coins = {5, 9, 7};
+        int result = new LookChange().solution(coins,11 );
         System.out.println("结果：" + result);
     }
 
 
     public int solution(int[] coins, int money) {
+        if(money<1){
+            return 0;
+        }
         int[] table = new int[money + 1];
         for (int i = 0; i < table.length; i++) {
             table[i] = Integer.MAX_VALUE;
@@ -32,7 +35,6 @@ public class LookChange {
         if (table[money] == Integer.MAX_VALUE) {
             return -1;
         }
-        System.out.println(Arrays.toString(table));
         return table[money];
     }
 }
