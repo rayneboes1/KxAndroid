@@ -19,14 +19,14 @@ public class MatchPattern {
         //表达式到达结尾
         if (pi == pattern.length()) {
             //表达式和文本都到达末尾，则说明匹配
-            if (ti == text.length() || pattern.charAt(pi - 1) == '*') {
+            if (ti == text.length()) {
                 match = true;
             }
             return;
         }
         char pc = pattern.charAt(pi);
         if (pc == '*') {
-            for (int i = ti; i < text.length(); i++) {
+            for (int i = ti; i <= text.length(); i++) {
                 matchInternal(pattern, text, pi + 1, i);
             }
         } else if (pc == '?') {
@@ -40,7 +40,7 @@ public class MatchPattern {
 
     public static void main(String[] args) {
         MatchPattern matchPattern = new MatchPattern();
-        boolean result = matchPattern.match("abc?", "abcd");
+        boolean result = matchPattern.match("abc*", "abcddd");
         System.out.println("是否匹配：" + result);
     }
 
