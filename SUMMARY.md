@@ -93,6 +93,7 @@
   * [线程和进程](android/xian-cheng-he-jin-cheng.md)
   * [内部原理](android/nei-bu-yuan-li/README.md)
     * [消息循环机制](android/nei-bu-yuan-li/xiao-xi-ji-zhi.md)
+    * [Binder](android/nei-bu-yuan-li/binder.md)
     * [Window](android/nei-bu-yuan-li/window.md)
     * [ArrayMap](android/nei-bu-yuan-li/arraymap.md)
     * [App 启动流程](android/nei-bu-yuan-li/app-qi-dong-liu-cheng.md)
