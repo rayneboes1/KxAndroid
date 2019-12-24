@@ -98,6 +98,10 @@ class Singleton {
 
 既避免了并发问题，又避免了互斥锁写法带来的性能问题。
 
+如何保证可见性？
+
+通过 [happens-before 原则](../../java/jvm.md#happensbefore-yuan-ze)：对同一个锁的unlock happens before于对锁的lock。如果有多个线程进入了10行代码处，只有一个线程可以获得锁，如果该线程对sIntance复制的新对象，那么当下一个线程获取锁之后，sInstance 一定为非空。
+
 ### 静态内部类
 
 ```text
