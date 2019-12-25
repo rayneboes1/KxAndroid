@@ -240,7 +240,21 @@ private void gc() {
 
 ## clone
 
+```text
+public SparseArray<E> clone() {
+    SparseArray<E> clone = null;
+    try {
+        clone = (SparseArray<E>) super.clone();
+        clone.mKeys = mKeys.clone();
+        clone.mValues = mValues.clone();
+    } catch (CloneNotSupportedException cnse) {
+        /* ignore */
+    }
+    return clone;
+}
+```
 
+### 数组调用clone拷贝是深拷贝还是浅拷贝？
 
-//数组调用clone拷贝
+浅拷贝
 
