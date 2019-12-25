@@ -111,23 +111,24 @@ static int binarySearch(int[] array, int size, int value) {
     }
 ```
 
-未找到时，lo为最后一个大于key的位置，因此直接插入即可，省去了排序的过程。
-
-
+未找到时，lo为最后一个大于key的位置，因此直接插入即可，省去了插入过程中再排序的过程。
 
 ```text
 public static boolean[] insert(boolean[] array, int currentSize, int index, boolean element) {
         assert currentSize <= array.length;
-
+        //如果数组空间足够，直接把index后面的元素后移，然后更新index位置的值
         if (currentSize + 1 <= array.length) {
             System.arraycopy(array, index, array, index + 1, currentSize - index);
             array[index] = element;
             return array;
         }
-
+        //数组空间不足时，先申请一个新的数组（大小为原数组的2倍）
         boolean[] newArray = ArrayUtils.newUnpaddedBooleanArray(growSize(currentSize));
+        //复制 index 之前的元素
         System.arraycopy(array, 0, newArray, 0, index);
+        //新元素插入到 index 位置
         newArray[index] = element;
+        复制原数组index之后的原素
         System.arraycopy(array, index, newArray, index + 1, array.length - index);
         return newArray;
     }
@@ -137,16 +138,26 @@ public static boolean[] insert(boolean[] array, int currentSize, int index, bool
 
 ```text
 public static int growSize(int currentSize) {
-        return currentSize <= 4 ? 8 : currentSize * 2;
-    }
+    return currentSize <= 4 ? 8 : currentSize * 2;
+}
 ```
 
 ## get
 
+
+
+```text
+public E get(int key) {
+    return get(key, null);
+}
+```
+
+
+
 ```text
 public E get(int key, E valueIfKeyNotFound) {
     int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
-
+    //如果没有找到key或者key对应的元素被标记为删除
     if (i < 0 || mValues[i] == DELETED) {
         return valueIfKeyNotFound;
     } else {
@@ -157,13 +168,79 @@ public E get(int key, E valueIfKeyNotFound) {
 
 
 
+## remove
+
+
+
+```text
+public void remove(int key) {
+    delete(key);
+}
+```
+
+
+
+```text
+public void delete(int key) {
+    int i = ContainerHelpers.binarySearch(mKeys, mSize, key);
+
+    if (i >= 0) {
+        if (mValues[i] != DELETED) {
+            mValues[i] = DELETED;
+            mGarbage = true;
+        }
+    }
+}
+```
+
+
+
 
 
 ## size
 
+
+
+```text
+public int size() {
+    if (mGarbage) {
+        gc();
+    }
+    return mSize;
+}
+```
+
 ## gc
 
+```text
+private void gc() {
+    int n = mSize;
+    int o = 0;
+    int[] keys = mKeys;
+    Object[] values = mValues;
+    for (int i = 0; i < n; i++) {
+        Object val = values[i];
+        if (val != DELETED) {
+            if (i != o) {
+                keys[o] = keys[i];
+                values[o] = val;
+                values[i] = null;
+            }
+            o++;
+        }
+    }
+    mGarbage = false;
+    mSize = o;
+}
+```
+
+算法题 [26. 删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/) 
+
+
+
 ## clone
+
+
 
 //数组调用clone拷贝
 
