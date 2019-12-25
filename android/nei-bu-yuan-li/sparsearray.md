@@ -111,7 +111,7 @@ static int binarySearch(int[] array, int size, int value) {
     }
 ```
 
-未找到时，lo为最后一个大于key的位置
+未找到时，lo为最后一个大于key的位置，因此直接插入即可，省去了排序的过程。
 
 
 
