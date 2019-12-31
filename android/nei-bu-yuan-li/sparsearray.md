@@ -69,8 +69,9 @@ public void put(int key, E value) {
     if (i >= 0) {
         mValues[i] = value;
     } else {
+        // i 指向大于 key 的第一个位置
         i = ~i;
-
+        //此位置之前有过元素不过已经删除了，直接覆盖
         if (i < mSize && mValues[i] == DELETED) {
             mKeys[i] = key;
             mValues[i] = value;
@@ -78,12 +79,13 @@ public void put(int key, E value) {
         }
 
         if (mGarbage && mSize >= mKeys.length) {
+            //先进行一次gc
             gc();
 
             // Search again because indices may have changed.
             i = ~ContainerHelpers.binarySearch(mKeys, mSize, key);
         }
-
+        //将新的key插入到数组对应位置
         mKeys = GrowingArrayUtils.insert(mKeys, mSize, i, key);
         mValues = GrowingArrayUtils.insert(mValues, mSize, i, value);
         mSize++;
@@ -98,7 +100,7 @@ public void put(int key, E value) {
 3. 如果有必要，进行一次「垃圾回收」，并更新即将插入的位置（垃圾回收过程数组元素发生了移动，所以插入位置可能会变动）
 4. 将key和value插入对应的位置。
 
-这里有一个巧妙的设计，在进行二分查找时，如果没有找到对应元素，返回的是第一个大于key的元素下标按位取反的值。具体源码在ContainerHelpers 的 binarySearch 方法中：
+这里有一个巧妙的设计，在进行二分查找时，如果没有找到对应元素，返回的是第一个大于key的下标按位取反的值。具体源码在ContainerHelpers 的 binarySearch 方法中：
 
 ```text
 static int binarySearch(int[] array, int size, int value) {
@@ -122,6 +124,8 @@ static int binarySearch(int[] array, int size, int value) {
 ```
 
 在上面代码中，未找到时，lo为最后一个大于key的位置。**因此在put方法中，可以再次按位取反得到这个位置下标，然后执行更新或插入即可，省去了插入过程中再排序的过程。**
+
+我不知道有多少人跟我一样，对二分的了解仅限于查找的时间复杂度，却忽略了这么一条很重要的特点，这样我们再维护一个有序数组时，使用一次二分查找既可以检查数组中是否已经包含待添加的元素，又可以知道它应该被存在的位置。
 
 insert 方法逻辑比较简单，就是在数组的制定位置插入元素。
 
@@ -155,8 +159,6 @@ public static int growSize(int currentSize) {
 ```
 
 ## get
-
-
 
 ```text
 public E get(int key) {
@@ -246,9 +248,9 @@ private void gc() {
 }
 ```
 
+总体思路就是把所有不是DELETED 的元素都前移到数组的前半部分，然后把后半部分的元素都赋值为null。
+
 算法题 [26. 删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/) 
-
-
 
 ## clone
 
@@ -268,5 +270,5 @@ public SparseArray<E> clone() {
 
 ### 数组调用clone拷贝是深拷贝还是浅拷贝？
 
-浅拷贝
+浅拷贝，需要验证。
 
