@@ -2,9 +2,9 @@
 
 ## 简介
 
-SparseArray（稀疏数组） 用于建立整数和对象之间的映射，比 HashMap&lt;Integer,Object&gt; 更高效。一是因为避免了自动装箱过程，二是不依赖一个额外的 Entry 包装对象。内部采用了两个数组来存储key和value。寻找key时使用了二分查找，对于大量的数据就不是很高效。
+SparseArray（稀疏数组） 用于建立整数和对象之间的映射，比 HashMap&lt;Integer,Object&gt; 更高效。一是因为避免了自动装箱过程，二是不依赖一个额外的 Entry 包装对象。内部采用了两个数组来存储key和value，寻找key时使用了二分查找，当然，对于大量的数据就不是很高效。
 
-为了提升性能，当移除元素时，并不会在数组中删除元素并移动数组中的其他元素，而是将要删除的元素标记为已删除；当「垃圾回收」时才会将标记为删除的元素真正移除。当数组需要扩容或者获取数组size时，「垃圾回收」才会进行。
+为了提升性能，当移除元素时，并不会在数组中删除元素并移动数组中的其他元素，而是将要删除的元素标记为「已删除」；当「垃圾回收」时才会将标记为删除的元素真正移除。当数组需要扩容或者获取数组size时，「垃圾回收」才会进行。
 
 [SparseArray 源码](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/util/SparseArray.java;l=56;bpv=1;bpt=1?q=SparseArray)
 
@@ -60,7 +60,7 @@ public static final Object[] OBJECT = new Object[0];
 
 ## put
 
-put 用于放入一个 int 到 E 类型对象的映射。put 方法源码如下：
+put 方法用于放入一个 int 到 E 类型对象的映射。put 方法源码如下：
 
 ```text
 public void put(int key, E value) {
@@ -100,7 +100,9 @@ public void put(int key, E value) {
 3. 如果有必要，进行一次「垃圾回收」，并更新即将插入的位置（垃圾回收过程数组元素发生了移动，所以插入位置可能会变动）
 4. 将key和value插入对应的位置。
 
-这里有一个巧妙的设计，在进行二分查找时，如果没有找到对应元素，返回的是第一个大于key的下标按位取反的值。具体源码在ContainerHelpers 的 binarySearch 方法中：
+这里有一个巧妙的设计，在进行二分查找时，如果没有找到对应元素，返回的是第一个大于key的下标按位取反的值。
+
+具体源码在ContainerHelpers 的 binarySearch 方法中：
 
 ```text
 static int binarySearch(int[] array, int size, int value) {
@@ -123,11 +125,13 @@ static int binarySearch(int[] array, int size, int value) {
     }
 ```
 
-在上面代码中，未找到时，lo为最后一个大于key的位置。**因此在put方法中，可以再次按位取反得到这个位置下标，然后执行更新或插入即可，省去了插入过程中再排序的过程。**
+在上面代码中，未找到时，lo为最后一个大于key的位置。
 
-我不知道有多少人跟我一样，对二分的了解仅限于查找的时间复杂度，却忽略了这么一条很重要的特点，这样我们再维护一个有序数组时，使用一次二分查找既可以检查数组中是否已经包含待添加的元素，又可以知道它应该被存在的位置。
+**因此在put方法中，**`i = ~i`**可以再次按位取反得到这个位置下标，然后执行更新或插入即可，省去了插入后再排序的过程。**
 
-insert 方法逻辑比较简单，就是在数组的制定位置插入元素。
+我不知道有多少人跟我一样，对二分的了解仅限于查找的时间复杂度，却忽略了这么一条很重要的特点，借助这个特性，这样我们在维护一个有序数组时，使用一次二分查找既可以检查数组中是否已经包含待添加的元素，又可以知道它应该被存在的位置。
+
+insert 方法逻辑比较简单，就是在数组的指定位置插入元素，如果当数组空间不足时进行扩容。
 
 ```text
 public static boolean[] insert(boolean[] array, int currentSize, int index, boolean element) {
@@ -150,7 +154,7 @@ public static boolean[] insert(boolean[] array, int currentSize, int index, bool
     }
 ```
 
-当数组空间不足时，则对其进行扩容，扩容后的大小使用 growSize 方法计算，源码如下，可以看到扩容为数组当前容量的二倍。
+扩容后的大小使用 `growSize()` 方法计算，源码如下:
 
 ```text
 public static int growSize(int currentSize) {
@@ -158,15 +162,17 @@ public static int growSize(int currentSize) {
 }
 ```
 
+可以看到扩容后的容量为数组当前容量的二倍。
+
 ## get
+
+get 方法就比较简单了，直接通过二分查找法来查找key是否在数组中，如果有则返回对应的value，否则就返回默认值（如果没有设置就会返回null）。
 
 ```text
 public E get(int key) {
     return get(key, null);
 }
 ```
-
-
 
 ```text
 public E get(int key, E valueIfKeyNotFound) {
@@ -184,15 +190,13 @@ public E get(int key, E valueIfKeyNotFound) {
 
 ## remove
 
-
-
 ```text
 public void remove(int key) {
     delete(key);
 }
 ```
 
-
+移动元素调用了delete方法，源码如下：
 
 ```text
 public void delete(int key) {
@@ -207,13 +211,11 @@ public void delete(int key) {
 }
 ```
 
-
-
-
+为了性能，delete 并没有删除元素并搬移数据，而是简单的把对应位置的value 执行 DELETED，并将 `mGarbage`设为 true，意味着有必要进行「垃圾回收」了。
 
 ## size
 
-
+size 方法返回当前数组的容量，不过在返回之前，如果 mGarbage 为 true，则需要先调用 gc 方法进行「垃圾回收」。
 
 ```text
 public int size() {
@@ -225,6 +227,8 @@ public int size() {
 ```
 
 ## gc
+
+gc 的代码源码如下：
 
 ```text
 private void gc() {
@@ -248,9 +252,11 @@ private void gc() {
 }
 ```
 
-总体思路就是把所有不是DELETED 的元素都前移到数组的前半部分，然后把后半部分的元素都赋值为null。
+代码也很好理解，思路就是把所有不是DELETED 的元素都前移到数组的前半部分，然后把后半部分的元素都赋值为null。
 
-算法题 [26. 删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/) 
+顺便说一句，在 LeetCode 的算法题 [26. 删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/) 中，移动重复元素时可以采用相同的逻辑。
+
+> 如果我是面试官，我会先让候选人写一遍这个算法题，再问他 SparseArray 的源码，哈哈。
 
 ## clone
 
@@ -268,7 +274,7 @@ public SparseArray<E> clone() {
 }
 ```
 
-### 数组调用clone拷贝是深拷贝还是浅拷贝？
+clone 方法也值得关注下，这里涉及深拷贝和浅拷贝的问题。可以看到对 mKeys 和 mValues 直接调用了数组的 clone 方法。那对数组调用 clone 是深拷贝还是浅拷贝呢？
 
-浅拷贝，需要验证。
+todo浅拷贝，需要验证。
 
