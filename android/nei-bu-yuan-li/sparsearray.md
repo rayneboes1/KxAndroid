@@ -332,7 +332,7 @@ SparseArray 还提供了一些其他方法，比如append、clear、valueAt等�
 
 ## 总结
 
-SparseArray 用于建立整数到对象的映射，主要是想解决 HashMap 存在的自动装箱以及内存占用的问题，但并不适用于数据量较大的情况。
+SparseArray 用于建立整数到对象的映射，针对移动开发进行了优化，主要是想解决 HashMap 存在的自动装箱以及内存占用的问题，但并不适用于数据量较大的情况。
 
 SparseArray 内部通过两个数组 mKeys 和 mValues 来分别存储 key 和 value，其中mKeys是一个有序整数数组，在查找 key 时使用了二分查找。
 
