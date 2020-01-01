@@ -2,9 +2,11 @@
 
 ## 简介
 
-SparseArray（稀疏数组）是 Android 框架提供的工具类，位于 android.util 包下，用于建立整数和对象之间的映射，效果相当于 HashMap&lt;Integer,Object&gt;，不过比 HashMap&lt;Integer,Object&gt; 更高效。相比HashMap&lt;Integer,Object&gt; 主要做了两点优化：一是避免了自动装箱过程，二是不依赖一个额外的 Entry 包装对象。
+SparseArray（稀疏数组）是 Android 框架提供的工具类，位于 android.util 包下，用于建立整数和对象之间的映射，效果相当于 HashMap&lt;Integer,Object&gt;，不过比 HashMap&lt;Integer,Object&gt; 更高效。
 
-SpareArray 内部采用了两个数组来分别存储 key 和 value，寻找 key 时使用了二分查找，不过，也是由于这个原因，查找效率肯定是比不上 HashMap，主要用于少量数据的情况。
+SparseArray 相比 HashMap&lt;Integer,Object&gt; 主要做了两点优化：一是避免了自动装箱过程，二是不依赖一个额外的 Entry 包装对象。
+
+SpareArray 内部采用了两个数组来分别存储 key 和 value，寻找 key 时使用了二分查找，不过，也是由于这个原因，查找效率肯定是比不上 HashMap，使用于少量数据的情况。
 
 [SparseArray 源码](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/util/SparseArray.java;l=56;bpv=1;bpt=1?q=SparseArray) 一共才400多行，比较容易懂，这里只分析几个主要方法的源码。
 
@@ -29,7 +31,9 @@ public class SparseArray<E> implements Cloneable {
 
 SparseArray 采用了两个数组 `mKeys` 和 `mValues` 分别存储 key 和 value，其中存储 key 的数组为`int[]`类型，避免了 HashMap 的自动装箱和拆箱过程。
 
-mGarbage 表示是否有必要进行「垃圾回收」，当然这里的垃圾回收与JVM的垃圾回收不是一个过程，只是进行数组元素的搬移，移除不再需要的元素，避免不必要的扩容。
+`mGarbage` 表示是否有必要进行「垃圾回收」，当然这里的垃圾回收与 JVM 的垃圾回收不是一个过程，只是进行数组元素的搬移，移除不再需要的元素。
+
+`DELETED` 是一个静态常量，所有被删除的元素会先指向这个对象，可以把它当做一个标记。
 
 ## 构造方法
 
