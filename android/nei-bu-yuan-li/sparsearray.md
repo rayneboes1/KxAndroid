@@ -1,3 +1,7 @@
+---
+description: 一个短小精悍的工具类。
+---
+
 # SparseArray
 
 ## 简介
