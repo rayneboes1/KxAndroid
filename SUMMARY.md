@@ -55,7 +55,7 @@
   * [数据库](computer_science/database.md)
 * [软件工程](software_engineering/README.md)
   * [编程思想](software_engineering/bian-cheng-si-xiang.md)
-  * [设计模式](software_engineering/design_pattern.md)
+  * [设计模式](software_engineering/design_pattern/README.md)
 * [Java](java/README.md)
   * [基础](java/base.md)
   * [异常](java/exception.md)
