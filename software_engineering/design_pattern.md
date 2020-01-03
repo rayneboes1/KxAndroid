@@ -1,6 +1,6 @@
 # 设计模式
 
-关于设计模式的内容请访问 InterviewBase 的[对应章节](https://wenhaiz.gitbook.io/interviewbase/design-pattern)。
+关于设计模式的内容请访问 InterviewBase 的[对应章节](https://wenhaiz.gitbook.io/interviewbase/software-engineering/design-pattern)。
 
 * Q：谈谈MVC、MVP和MVVM，好在哪里，不好在哪里？
 * Q：如何理解生产者消费者模型？
