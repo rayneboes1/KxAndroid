@@ -1,93 +1,8 @@
 # SharedPreference
 
-ContextImpl 中的方法
+SharePreferences 的实现类是`SharedPreferencesImpl`
 
-```text
-@Override
-public SharedPreferences getSharedPreferences(String name, int mode) {
-    // At least one application in the world actually passes in a null
-    // name.  This happened to work because when we generated the file name
-    // we would stringify it to "null.xml".  Nice.
-    if (mPackageInfo.getApplicationInfo().targetSdkVersion <
-            Build.VERSION_CODES.KITKAT) {
-        if (name == null) {
-            name = "null";
-        }
-    }
-
-    File file;
-    synchronized (ContextImpl.class) {
-        if (mSharedPrefsPaths == null) {
-            mSharedPrefsPaths = new ArrayMap<>();
-        }
-        file = mSharedPrefsPaths.get(name);
-        if (file == null) {
-            file = getSharedPreferencesPath(name);
-            mSharedPrefsPaths.put(name, file);
-        }
-    }
-    return getSharedPreferences(file, mode);
-}
-```
-
-生成file时调用了getSharedPreferencesPath
-
-```text
-@Override
-public File getSharedPreferencesPath(String name) {
-    return makeFilename(getPreferencesDir(), name + ".xml");
-}
-```
-
-```text
-private File getPreferencesDir() {
-    synchronized (mSync) {
-        if (mPreferencesDir == null) {
-            //应用的data 目录下 shared_prefs 文件夹
-            mPreferencesDir = new File(getDataDir(), "shared_prefs");
-        }
-        return ensurePrivateDirExists(mPreferencesDir);
-    }
-}
-```
-
-调用了getSharedPreferences\(file, mode\):
-
-```text
-@Override
-public SharedPreferences getSharedPreferences(File file, int mode) {
-    SharedPreferencesImpl sp;
-    synchronized (ContextImpl.class) {
-        final ArrayMap<File, SharedPreferencesImpl> cache = getSharedPreferencesCacheLocked();
-        sp = cache.get(file);
-        if (sp == null) {
-            checkMode(mode);
-            if (getApplicationInfo().targetSdkVersion >= android.os.Build.VERSION_CODES.O) {
-                if (isCredentialProtectedStorage()
-                        && !getSystemService(UserManager.class)
-                                .isUserUnlockingOrUnlocked(UserHandle.myUserId())) {
-                    throw new IllegalStateException("SharedPreferences in credential encrypted "
-                            + "storage are not available until after user is unlocked");
-                }
-            }
-            //创建 SharedPreferences 实例
-            sp = new SharedPreferencesImpl(file, mode);
-            cache.put(file, sp);
-            return sp;
-        }
-    }
-    if ((mode & Context.MODE_MULTI_PROCESS) != 0 ||
-        getApplicationInfo().targetSdkVersion < android.os.Build.VERSION_CODES.HONEYCOMB) {
-        // If somebody else (some other process) changed the prefs
-        // file behind our back, we reload it.  This has been the
-        // historical (if undocumented) behavior.
-        sp.startReloadIfChangedUnexpectedly();
-    }
-    return sp;
-}
-```
-
-可以看到 SharePreferences 的实现类是`SharedPreferencesImpl` 构造方法的源码如下：
+`Editor`的实现类是 EditorImpl，是`SharedPreferencesImpl`的内部类。
 
 ```text
 SharedPreferencesImpl(File file, int mode) {
@@ -132,7 +47,6 @@ private void loadFromDisk() {
             try {
                 str = new BufferedInputStream(
                         new FileInputStream(mFile), 16 * 1024);
-                //将读取的文件解析成Map        
                 map = (Map<String, Object>) XmlUtils.readMapXml(str);
             } catch (Exception e) {
                 Log.w(TAG, "Cannot read " + mFile.getAbsolutePath(), e);
@@ -148,7 +62,6 @@ private void loadFromDisk() {
     }
 
     synchronized (mLock) {
-        //设置读取状态为true
         mLoaded = true;
         mThrowable = thrown;
 
@@ -175,6 +88,8 @@ private void loadFromDisk() {
     }
 }
 ```
+
+
 
 
 
@@ -208,9 +123,9 @@ private void awaitLoadedLocked() {
 }
 ```
 
-`Editor`的实现类是 EditorImpl，是`SharedPreferencesImpl`的内部类。
 
-[QueuedWork](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java)
+
+
 
 
 
