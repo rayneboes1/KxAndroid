@@ -201,7 +201,7 @@ public void addView(View view, ViewGroup.LayoutParams params,
 }
 ```
 
-调用 ViewRootImpl 的 setView 方法，将 decorView 与ViewRootImpl关联。ViewRootImpl 中有一个 mView字段保存。
+调用 ViewRootImpl 的 setView 方法，讲decorView与ViewRootImpl关联。ViewRootImpl 中有一个 mView字段保存。
 
 ```text
 public void setView(View view, WindowManager.LayoutParams attrs, View panelParentView) {
