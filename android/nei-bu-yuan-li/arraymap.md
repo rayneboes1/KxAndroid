@@ -6,7 +6,52 @@ ArrayMap 位于 android.util 包下，实现了 Map 接口。为了更好的利�
 
 
 
+## 属性
+
+实例变量
+
+```text
+// 是否保证 HashCode 唯一
+final boolean mIdentityHashCode;
+// 保存 HashCode 的数组
+int[] mHashes;
+// 保存 key 和 value 的数组
+Object[] mArray;
+// ArrayMap 的映射对数量
+int mSize;
+```
+
+
+
+```text
+//静态
+
+//是否在并发修改时抛出异常
+private static final boolean CONCURRENT_MODIFICATION_EXCEPTIONS = true;
+private static final int BASE_SIZE = 4;
+//缓存的数组的最大数量
+private static final int CACHE_SIZE = 10;
+
+static final int[] EMPTY_IMMUTABLE_INTS = new int[0];
+public static final ArrayMap EMPTY = new ArrayMap<>(-1);
+
+//缓存 size 为 4 的数组
+static Object[] mBaseCache;
+static int mBaseCacheSize;
+//缓存 size 为 4*2 的数组
+static Object[] mTwiceBaseCache;
+static int mTwiceBaseCacheSize;
+
+
+```
+
+
+
+
+
 二分查找
+
+
 
 ```text
 private static int binarySearchHashes(int[] hashes, int N, int hash) {
@@ -25,7 +70,7 @@ private static int binarySearchHashes(int[] hashes, int N, int hash) {
 
 ## 构造方法
 
-ArrayMap 暴露了三个构造方法，如下面代码所示，最终都会盗用至两个参数的构造方法，但是该构造方式被 `@hide` 标记了，因此不能直接调用。通过构造函数的调用关系可以看到，`mIdentityHashCode` 始终是`false`的。
+ArrayMap 暴露了三个构造方法，如下面代码所示，最终都会调用到有两个参数的构造方法，但是该构造方式被 `@hide` 标记了，因此不能直接调用。通过构造函数的调用关系可以看到，`mIdentityHashCode` 始终是`false`的，也就是允许哈希冲突。
 
 ```text
 public ArrayMap(ArrayMap<K, V> map) {
@@ -64,9 +109,9 @@ public ArrayMap(int capacity, boolean identityHashCode) {
 }
 ```
 
-通常都是存储少量数据，缓存数组可以避免频繁的创建和回收数组。
+在构造方法中，处理对`capacity <0` 的情况进行特殊处理外，调用了 `allocArrays` 方法来创建数组并赋值给`mHashes`和 `mArray`。
 
-通过 allocArrays 方法创建数组：
+ allocArrays 方法代码如下：
 
 ```text
 private void allocArrays(final int size) {
@@ -100,15 +145,24 @@ private void allocArrays(final int size) {
             }
         }
     }
+    //没有缓存的数组或者缓存的数组长度不满足条件
     mHashes = new int[size];
     //mArray 的容量是 size 的 2 倍
     mArray = new Object[size<<1];
 }
 ```
 
+allocArray 的前面一部分代码的逻辑是，如果要申请的数组长度是BASE\_SIZE或者BASE\_SIZE的2倍，那么优先利用缓存的数组，如果没有缓存数组或者申请的数组长度不符合这两种情况，在创建新数组。
+
+由于 ArrayMap 通常都是存储少量数据，通过缓存数组可以避免频繁的创建数组，有效减少垃圾回收的影响。
+
+关于缓存数组的逻辑后面再看。
+
+可以看到 mArray 的容量是 mHashes 的 2 倍，这跟如何存储 key 和 value 有关，先看put方法。
+
 ## put
 
-put 方法在 key 存在时会返回旧的value，当key不存在是返回null。
+put 方法是Map 接口的，用于存入一个键值对。在 key 存在时会更新value的值并返回旧的value，当key不存在时就插入value 返回null。代码如下：
 
 ```text
 public V put(K key, V value) {
@@ -120,11 +174,11 @@ public V put(K key, V value) {
         hash = 0;
         index = indexOfNull();
     } else {
-        //mIdentityHashCode 始终为false，因此 hash=key.hashCode();
+        //由前面构造方法可以看到，mIdentityHashCode 始终为false，因此 hash=key.hashCode();
         hash = mIdentityHashCode ? System.identityHashCode(key) : key.hashCode();
         index = indexOf(key, hash);
     }
-    //已经存在与 key 对应的映射，直接更新value并返回
+    //已经存在与 key 对应的映射，直接更新value并返回旧的value
     if (index >= 0) {
         //index 为 key 的 hash 在 mHashes 数组中的下标， 
         //在 mArray 数组中，键所在的下标为index*2,值所在的下标为index*2+1
@@ -187,93 +241,216 @@ public V put(K key, V value) {
 }
 ```
 
+put 方法的主要逻辑为：**先根据 key 的hashCode 在 mHashes 数组中通过二分查找法查找是否存在，如果存在且mArray对应的位置页存在该 key，那么更新value并返回旧的value。否则，就执行插入，必要时进行数组扩容。**
 
+这里面有很多细节，一一来看。
 
-indexOfNull
+首先是对于 key 为 null 时的查找，调用了 indexOfNull 方法，代码如下：
+
+### indexOfNull
 
 ```text
 int indexOfNull() {
     final int N = mSize;
 
-    // Important fast case: if nothing is in here, nothing to look for.
+    // 没有数据，直接返回
     if (N == 0) {
         return ~0;
     }
-
+    // 在 mHashes 数组的 0~N-1 范围内，使用二分查找法查找是否存在 0
     int index = binarySearchHashes(mHashes, N, 0);
 
-    // If the hash code wasn't found, then we have no entry for this key.
+    // 没有找到
     if (index < 0) {
         return index;
     }
 
-    // If the key at the returned index matches, that's what we want.
+    // mHashes 数组中存在 0，并且 mArray 对应的位置 key 也是 null，返回该下标
     if (null == mArray[index<<1]) {
         return index;
     }
 
-    // Search for a matching key after the index.
+    // mHashes 数组中存在 0，但 mArray 对应的位置 key 不是 null
+    // 存在哈希冲突，继续向后查找
     int end;
     for (end = index + 1; end < N && mHashes[end] == 0; end++) {
         if (null == mArray[end << 1]) return end;
     }
 
-    // Search for a matching key before the index.
+    // mHashes 数组中存在 0，但 mArray 对应的位置 key 不是 null
+    // 存在哈希冲突，继续向前查找
     for (int i = index - 1; i >= 0 && mHashes[i] == 0; i--) {
         if (null == mArray[i << 1]) return i;
     }
 
-    // Key not found -- return negative value indicating where a
-    // new entry for this key should go.  We use the end of the
-    // hash chain to reduce the number of array entries that will
-    // need to be copied when inserting.
+    // 没有找到，返回一个负值。同时把第一个hash不相等的下标返回
+    // 以便下次插入时尽量少的移动元素
     return ~end;
 }
 ```
 
-indexOf
+主要的代码语句我都加了注释，可以看出 ArrayMap 使用了线性探测法处理哈希冲突，在hashCode 冲突但是key不匹配时，返回数组末尾的位置，可以减少插入元素时复制的元素数量。
 
-使用了线性探测法处理哈希冲突，返回数组末尾的位置，可以减少插入元素时复制的元素数量。
+
+
+对于不为 null 的 key，调用了 indexOf\(key,hash\) 来查找，该方法代码如下：
+
+### indexOf
 
 ```text
 int indexOf(Object key, int hash) {
     final int N = mSize;
 
-    // Important fast case: if nothing is in here, nothing to look for.
+    // 没有数据直接返回
     if (N == 0) {
         return ~0;
     }
 
+    //使用二分查找法查找在 mHashes 数组中查找 hash
     int index = binarySearchHashes(mHashes, N, hash);
 
-    // If the hash code wasn't found, then we have no entry for this key.
+    // hash 没有找到，不存在映射对
     if (index < 0) {
         return index;
     }
 
-    // If the key at the returned index matches, that's what we want.
+    // hash 存在且 mArray 对应位置的 key 匹配 
     if (key.equals(mArray[index<<1])) {
         return index;
     }
 
-    // Search for a matching key after the index.
+    // hash 存在但是key 不匹配，继续向后搜索
     int end;
     for (end = index + 1; end < N && mHashes[end] == hash; end++) {
         if (key.equals(mArray[end << 1])) return end;
     }
 
-    // Search for a matching key before the index.
+    // hash 存在但是key 不匹配，继续向前搜索
     for (int i = index - 1; i >= 0 && mHashes[i] == hash; i--) {
         if (key.equals(mArray[i << 1])) return i;
     }
 
-    // Key not found -- return negative value indicating where a
-    // new entry for this key should go.  We use the end of the
-    // hash chain to reduce the number of array entries that will
-    // need to be copied when inserting.
+    // 没有找到符合的key，返回负数。同时把第一个不等于hash的下标返回
+    // 以便下次插入时尽量少的移动元素
     return ~end;
 }
 ```
+
+indexOf 和 indexOfNull 的逻辑是一样的，不过在比较key时，是通过 equals 方法来进行的。
+
+以上是针对 key 的查找逻辑。
+
+当 index &gt;=0 时，也就是 ArrayMap 中已经存在相同 key 的映射，只需要更新值就可以了，put 方法中更新值的操作如下：
+
+```text
+if (index >= 0) {
+    //index 是 key 的 hashCode 在 mHashes 中的下标 
+    //在 mArray 数组中，键所在的下标为index*2,值所在的下标为index*2+1
+    index = (index<<1) + 1;
+    final V old = (V)mArray[index];
+    mArray[index] = value;
+    //返回旧值
+    return old;
+}
+```
+
+上面几行代码的重点是，对于 hashCode 在 mHashes 数组中的下标为index 的key，对应的value在 mArray 数组中的下标为 index\*2+1,而 key 在 mArray 中的下标为 index\*2，这一点从上面的搜索逻辑也可以看出来。
+
+举例来说，对于一个key，如果它的hashCode 在 mHashes 中的下标为 1，那么这个 key 在mArray 中的下标为 1\*2=2，它对应的value在mArray 中的位置为 1\*2+1=3。
+
+我们可以通过插入新值的逻辑再次验证一下，put 方法中插入新值的逻辑如下：
+
+```text
+//插入新值到 mHashes 和 mArray
+mHashes[index] = hash;
+// key 的下标为 index*2
+mArray[index<<1] = key;
+// value 的下标为 index*2+1
+mArray[(index<<1)+1] = value;
+//mSize + 1
+mSize++;
+```
+
+这样我们就搞清楚了 ArrayMap 到底是怎么存储 hashCode、key和value的。
+
+### indexOfXx 的返回值
+
+对于 put 方法中，当key不存在时，有这么一句代码：
+
+```text
+index = ~index;
+```
+
+其中 index 为indexOf 方法的返回值，由于此时key并不存在，所有 index是个负数，那为什么要对其取反呢？简单的说，因为取反后的位置就是新的key 要插入的位置。
+
+具体来说，分为两种情况，第一种是二分查找搜索直接返回负值的情况，这种情况在分析SparseArray 时已经说了，返回的是第一个大于要查找的值的下标，也就是它要插入的位置，具体分析可以查看[相关内容](sparsearray.md#put)，同时也解释了为什么 mHashes 是有序的。
+
+第二种情况则是在 mHashes 中查找到了 key 的哈希值，但是没有在 mArray 中找到对应的 key，这种情况对应的代码如下：
+
+```text
+// hash 存在但是key 不匹配，继续向后搜索
+int end;
+for (end = index + 1; end < N && mHashes[end] == hash; end++) {
+    if (key.equals(mArray[end << 1])) return end;
+}
+
+// hash 存在但是key 不匹配，继续向前搜索
+for (int i = index - 1; i >= 0 && mHashes[i] == hash; i--) {
+    if (key.equals(mArray[i << 1])) return i;
+}
+
+// 没有找到符合的key，返回负数。同时把第一个hash不相等的下标返回
+// 以便下次插入时尽量少的移动元素
+return ~end;
+```
+
+我们可以举个例子，假设 mHashes 中的元素为\[1,2,4,4,4,4,5,6\]，那么通过二分查找法，回先返回下标3，也就是第二个 4，如果 mArray 中没有对应的key，那么先向后搜索，假设直到最后一个4依然没有找到对应的key，那么此时end=6,也就是元素5的位置。
+
+接下来向前搜索，假设也没有找到对应的key，那么此时就返回\(6=-7\)，即 put 中 index 为-7， 而当通过 index=~index 再次取反时，index=6，也就是hash为4的key应该插入的位置。当插入这个key时，只需要移动5，6两个元素就可以了，如果返回第一个4的位置，那么需要移动的元素就是6个，这就是为什么要返回最后一个hash值相等的下标。
+
+现在应搞清楚了键的搜索、键值对的更新和插入逻辑，还有重要的逻辑没有说，就是数组扩容。
+
+### 数组扩容
+
+数组扩容的代码单独再复制一遍：
+
+```text
+if (osize >= mHashes.length) {
+    //数组空间不足，需要先扩容
+    final int n = osize >= (BASE_SIZE*2) ? (osize+(osize>>1))
+            : (osize >= BASE_SIZE ? (BASE_SIZE*2) : BASE_SIZE);
+
+    //保存旧数组
+    final int[] ohashes = mHashes;
+    final Object[] oarray = mArray;
+        
+    //通过 allocArrays 创建（复用）数组并赋值给 mHashes 和 mArray
+    allocArrays(n);
+
+    if (CONCURRENT_MODIFICATION_EXCEPTIONS && osize != mSize) {
+        //存在并发修改，抛出异常
+        throw new ConcurrentModificationException();
+    }
+
+    if (mHashes.length > 0) {
+        //将值从旧数组拷贝到新数组
+        System.arraycopy(ohashes, 0, mHashes, 0, ohashes.length);
+        System.arraycopy(oarray, 0, mArray, 0, oarray.length);
+    }
+    //释放（缓存）数组空间
+    freeArrays(ohashes, oarray, osize);
+ }
+
+if (index < osize) {
+   //在数组中间插入，需要移动插入位置后面的元素
+    System.arraycopy(mHashes, index, mHashes, index + 1, osize - index);
+    System.arraycopy(mArray, index << 1, mArray, (index + 1) << 1, (mSize - index) << 1);
+}
+```
+
+扩容策略为如果当前大小大于 BASE\_SIZE\*2=4\*2=8，那么扩容为原来的1.5倍，如果当前大小小于 8 但是大于4，那么扩容后数组大小为8；如果当前大小小于4，那么扩容为 4。
+
+扩容后的容量大小确定后，通过 allocArray 方法创建数组并赋值给 mHashes 和 mArray。
 
 
 
