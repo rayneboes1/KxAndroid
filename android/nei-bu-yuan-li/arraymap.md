@@ -245,19 +245,19 @@ put 方法的主要逻辑为：**先根据 key 的hashCode 在 mHashes 数组中
 
 这里面有很多细节，一一来看。
 
-首先是对于 key 为 null 时的查找，调用了 indexOfNull 方法，代码如下：
+### 查找为 null 的 key
 
-### indexOfNull
+对于 key 为 null 时的查找，调用了 `indexOfNull` 方法，代码如下：
 
 ```text
 int indexOfNull() {
     final int N = mSize;
 
-    // 没有数据，直接返回
+    // 如果没有数据，直接返回
     if (N == 0) {
         return ~0;
     }
-    // 在 mHashes 数组的 0~N-1 范围内，使用二分查找法查找是否存在 0
+    // 在 mHashes 数组的 0~N-1 范围内，使用二分查找法查找 0 是否存在
     int index = binarySearchHashes(mHashes, N, 0);
 
     // 没有找到
@@ -265,7 +265,8 @@ int indexOfNull() {
         return index;
     }
 
-    // mHashes 数组中存在 0，并且 mArray 对应的位置 key 也是 null，返回该下标
+    // mHashes 数组中存在 0
+    // 并且 mArray 对应的位置 key 也是 null，返回该下标
     if (null == mArray[index<<1]) {
         return index;
     }
@@ -289,13 +290,11 @@ int indexOfNull() {
 }
 ```
 
-主要的代码语句我都加了注释，可以看出 ArrayMap 使用了线性探测法处理哈希冲突，在hashCode 冲突但是key不匹配时，返回数组末尾的位置，可以减少插入元素时复制的元素数量。
+主要的代码语句我都加了注释，可以看出 ArrayMap 使用了线性探测法处理哈希冲突，在hashCode 冲突但是 key 不匹配时，**返回数组后半部分第一个不等于 hash 的位置**，这样可以减少插入元素时复制的元素数量。
 
-
+### 查找不是 null 的 key
 
 对于不为 null 的 key，调用了 indexOf\(key,hash\) 来查找，该方法代码如下：
-
-### indexOf
 
 ```text
 int indexOf(Object key, int hash) {
@@ -336,9 +335,11 @@ int indexOf(Object key, int hash) {
 }
 ```
 
-indexOf 和 indexOfNull 的逻辑是一样的，不过在比较key时，是通过 equals 方法来进行的。
+indexOf 和 indexOfNull 的逻辑是一样的，不过在比较 key 时，是通过 equals 方法来进行的。
 
 以上是针对 key 的查找逻辑。
+
+### 更新已存在 key 对应的 value
 
 当 index &gt;=0 时，也就是 ArrayMap 中已经存在相同 key 的映射，只需要更新值就可以了，put 方法中更新值的操作如下：
 
@@ -354,9 +355,9 @@ if (index >= 0) {
 }
 ```
 
-上面几行代码的重点是，对于 hashCode 在 mHashes 数组中的下标为index 的key，对应的value在 mArray 数组中的下标为 index\*2+1,而 key 在 mArray 中的下标为 index\*2，这一点从上面的搜索逻辑也可以看出来。
+上面几行代码的重点是，对于 hashCode 在 mHashes 数组中的下标为 index 的key，对应的value在 mArray 数组中的下标为 index\*2+1,而 key 在 mArray 中的下标为 index\*2，这一点从前面对于key的搜索逻辑也可以看出来。
 
-举例来说，对于一个key，如果它的hashCode 在 mHashes 中的下标为 1，那么这个 key 在mArray 中的下标为 1\*2=2，它对应的value在mArray 中的位置为 1\*2+1=3。
+举例来说，对于一个 key，如果它的hashCode 在 mHashes 中的下标为 1，那么这个 key 在mArray 中的下标为 1\*2=2，它对应的 value 在 mArray 中的位置为 1\*2+1=3。
 
 我们可以通过插入新值的逻辑再次验证一下，put 方法中插入新值的逻辑如下：
 
@@ -371,21 +372,23 @@ mArray[(index<<1)+1] = value;
 mSize++;
 ```
 
-这样我们就搞清楚了 ArrayMap 到底是怎么存储 hashCode、key和value的。
+这样我们就搞清楚了 ArrayMap 到底是怎么存储 hashCode、key 和 value 的。
 
-### indexOfXx 的返回值
+### 新映射的插入位置
 
-对于 put 方法中，当key不存在时，有这么一句代码：
+对于 put 方法中，当 key 不存在时，在执行插入前，有这么一句代码：
 
 ```text
 index = ~index;
 ```
 
-其中 index 为indexOf 方法的返回值，由于此时key并不存在，所有 index是个负数，那为什么要对其取反呢？简单的说，因为取反后的位置就是新的key 要插入的位置。
+其中 index 为 indexOf 方法的返回值，由于此时 key 并不存在，所有 index是个负数，那为什么要对其取反呢？
 
-具体来说，分为两种情况，第一种是二分查找搜索直接返回负值的情况，这种情况在分析SparseArray 时已经说了，返回的是第一个大于要查找的值的下标，也就是它要插入的位置，具体分析可以查看[相关内容](sparsearray.md#put)，同时也解释了为什么 mHashes 是有序的。
+简单的说，因为取反后的位置就是新的 key 要插入的位置。具体来说，分为两种情况。
 
-第二种情况则是在 mHashes 中查找到了 key 的哈希值，但是没有在 mArray 中找到对应的 key，这种情况对应的代码如下：
+第一种是二分查找搜索直接返回负值的情况，这种情况在分析SparseArray 时已经说了，返回的是第一个大于要查找的值的下标，也就是它要插入的位置，具体分析可以查看[相关内容](sparsearray.md#put)，这部分内容同时也解释了如何维护 mHashes 的有序性。
+
+第二种情况则是在 mHashes 中查找到了 key 的哈希值，但是没有在 mArray 中找到对应的 key，这种情况在查找时的代码如下：
 
 ```text
 // hash 存在但是key 不匹配，继续向后搜索
@@ -406,13 +409,34 @@ return ~end;
 
 我们可以举个例子，假设 mHashes 中的元素为\[1,2,4,4,4,4,5,6\]，那么通过二分查找法，回先返回下标3，也就是第二个 4，如果 mArray 中没有对应的key，那么先向后搜索，假设直到最后一个4依然没有找到对应的key，那么此时end=6,也就是元素5的位置。
 
-接下来向前搜索，假设也没有找到对应的key，那么此时就返回\(6=-7\)，即 put 中 index 为-7， 而当通过 index=~index 再次取反时，index=6，也就是hash为4的key应该插入的位置。当插入这个key时，只需要移动5，6两个元素就可以了，如果返回第一个4的位置，那么需要移动的元素就是6个，这就是为什么要返回最后一个hash值相等的下标。
+接下来向前搜索，假设也没有找到对应的key，那么此时就返回-7（~6），即 put 中 index 为-7， 而当通过 index=~index 再次取反时，index=6，也就是 hash 为 4 的 key 应该插入的位置。
 
-现在应搞清楚了键的搜索、键值对的更新和插入逻辑，还有重要的逻辑没有说，就是数组扩容。
+当插入这个key时，只需要移动5，6两个元素就可以了，如果返回第一个4的位置，那么需要移动的元素就是6个，这就是为什么要返回数组后半部分第一个不等于 hash 值的下标。
+
+确定了新映射的位置，然后直接把新映射的hashCode、key、value加入到数组中就可以了。插入新值的代码如下：
+
+```text
+
+if (index < osize) {
+   //在数组中间插入，需要移动待插入位置以及后面的元素
+    System.arraycopy(mHashes, index, mHashes, index + 1, osize - index);
+    System.arraycopy(mArray, index << 1, mArray, (index + 1) << 1, (mSize - index) << 1);
+}
+//插入新值到 mHashes 和 mArray
+mHashes[index] = hash;
+// key 的下标为 index*2
+mArray[index<<1] = key;
+// value 的下标为 index*2+1
+mArray[(index<<1)+1] = value;
+//mSize + 1
+mSize++;
+```
+
+这部分代码比较容易理解，不过在插入之前需要先确认数组大小满足要求，如果不满足，则需要先进行扩容。
 
 ### 数组扩容
 
-把数组扩容部分的代码单独再复制一遍：
+数组扩容部分的代码如下：
 
 ```text
 if (osize >= mHashes.length) {
@@ -440,17 +464,11 @@ if (osize >= mHashes.length) {
     //释放（缓存）数组空间
     freeArrays(ohashes, oarray, osize);
  }
-
-if (index < osize) {
-   //在数组中间插入，需要移动插入位置后面的元素
-    System.arraycopy(mHashes, index, mHashes, index + 1, osize - index);
-    System.arraycopy(mArray, index << 1, mArray, (index + 1) << 1, (mSize - index) << 1);
-}
 ```
 
-扩容策略为如果当前大小大于 BASE\_SIZE\*2=4\*2=8，那么扩容为原来的1.5倍，如果当前大小小于 8 但是大于4，那么扩容后数组大小为8；如果当前大小小于4，那么扩容为 4。
+扩容策略为如果当前数组大小大于 8（BASE\_SIZE\*2），那么扩容为原来的1.5倍；如果当前数组容量小于 8 但是大于4（BASE\_SIZE），那么扩容后数组大小为 8；如果当前数组容量小于4，那么扩容为 4。
 
-扩容后的容量大小确定后，通过 allocArray 方法创建数组并赋值给 mHashes 和 mArray。
+扩容后的容量大小确定后，通过 allocArray 方法创建数组并把新数组赋值给 mHashes 和 mArray。
 
 前面在分析构造方法时，已经看到过这个方法，这里仔细分析下，该方法代码如下：
 
@@ -462,13 +480,12 @@ private void allocArrays(final int size) {
     //优先利用缓存的数组
     if (size == (BASE_SIZE*2)) {
         synchronized (ArrayMap.class) {
-            if (mTwiceBaseCache != null) {
+            if (mTwiceBaseCache != null) {              
                 final Object[] array = mTwiceBaseCache;
-                mArray = array;
-                mTwiceBaseCache = (Object[])array[0];
-                mHashes = (int[])array[1];
-                //将前两个元素置为空
-                array[0] = array[1] = null;
+                mArray = array;              
+                mTwiceBaseCache = (Object[])array[0];             
+                mHashes = (int[])array[1];              
+                array[0] = array[1] = null;               
                 mTwiceBaseCacheSize--;
                 return;
             }
@@ -476,11 +493,16 @@ private void allocArrays(final int size) {
     } else if (size == BASE_SIZE) {
         synchronized (ArrayMap.class) {
             if (mBaseCache != null) {
+                //1.
                 final Object[] array = mBaseCache;
                 mArray = array;
+                //2.
                 mBaseCache = (Object[])array[0];
+                //3.
                 mHashes = (int[])array[1];
+                //4.
                 array[0] = array[1] = null;
+                //5.
                 mBaseCacheSize--;
                 return;
             }
@@ -493,9 +515,9 @@ private void allocArrays(final int size) {
 }
 ```
 
-方法中，针对容量为BASE\_SIZE或者BASE\_SIZE \*2 的情况，优先利用已经缓存的数组，我们以容量为BASE\_SIZE时的情况分析，代码逻辑是：
+方法中，针对容量为BASE\_SIZE或者BASE\_SIZE \*2 的情况，优先利用已经缓存的数组，我们以容量为 BASE\_SIZE 时的情况分析，代码逻辑是：
 
-1. 将 mBaseCache 赋值给 mArray
+1. 将 mArray 赋值为 mBaseCache
 2. 将 mBaseCache 赋值为 mArray\[0\]
 3. 将 mHashes 赋值为 mArray\[1\]
 4. 将 mArray\[0\] mArray\[1\]的值置空
@@ -515,11 +537,11 @@ static Object[] mBaseCache;
 
 说实话，这段注释我看了好几遍依然有点懵。大概意思是 mBaseCache 是指向链表的指针，而这个链表是由\(所有被缓存的\)数组组成的。其中 mBaseCache\[0\] 指向下一个被缓存的数组，mBaseCache\[1\] 指向的当前数组对应的 mHashes 数组。
 
-所以 mBaseCache 里的内容大概如下图所示：
+所以 mBaseCache 里的内容如下图所示：
 
 （画图）
 
-对照着图在看上面的逻辑就很容易理解了，mTwiceBaseCache 与 mBaseCache 除了缓存的数组长度不一致以外，其他都是相同的。
+对照着图在看上面的逻辑就很容易理解了。而 mTwiceBaseCache 与 mBaseCache 除了缓存的数组长度不一致以外，其他都是相同的。
 
 那么 mBaseCache 和 mTwiceBaseCache 是什么时候被赋值的呢？一定是回收数组时。在put方法中，在分配完新数组并从旧数组拷贝完元素之后，调用了 freeArrays 方法释放旧的数组，该方法代码如下：
 
@@ -543,11 +565,15 @@ private static void freeArrays(final int[] hashes, final Object[] array, final i
     } else if (hashes.length == BASE_SIZE) {
         synchronized (ArrayMap.class) {
             if (mBaseCacheSize < CACHE_SIZE) {
+                //1.
                 array[0] = mBaseCache;
+                //2.
                 array[1] = hashes;
+                //3.
                 for (int i=(size<<1)-1; i>=2; i--) {
                     array[i] = null;
                 }
+                //4.
                 mBaseCache = array;
                 mBaseCacheSize++;
             }
@@ -556,9 +582,18 @@ private static void freeArrays(final int[] hashes, final Object[] array, final i
 }
 ```
 
-可以看到只针对数组长度为 BASE\_SIZE 和 BASE\_SIZE \*2 的情况做了缓存。还是只看 BASE\_SIZE 的情况，将 array\[1\]指向了对应的 hashes 数组，然后将 array\[0\] 指向 mBaseCache,在把 mBaseCache 指向 array,形成了链表。同时把 array 中 下标大于1的元素置空，否则会存在内存泄漏。
+可以看到只针对数组长度为 BASE\_SIZE 和 BASE\_SIZE \*2 的情况做了缓存。还是只看 BASE\_SIZE 的情况:
+
+1. 将 array\[1\]指向了对应的 hashes 数组
+2. 将 array\[0\] 指向 mBaseCache
+3.  array 中 下标大于1的元素置空，否则会存在内存泄漏。
+4. 在把 mBaseCache 指向 array
+
+其中步骤2和4就把缓存的数组组织成了链表，mBaseCache 始终指向链表头的数组。
 
 以上就是数组被缓存和复用的逻辑，这也是我认为 ArrayMap 最难理解的地方。
+
+put 方法的逻辑分析完了，由于涉及的内容较多，如果想弄清楚还是多看几遍才行。
 
 ## get
 
