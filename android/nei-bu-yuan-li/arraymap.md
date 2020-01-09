@@ -412,7 +412,7 @@ return ~end;
 
 ### 数组扩容
 
-数组扩容的代码单独再复制一遍：
+把数组扩容部分的代码单独再复制一遍：
 
 ```text
 if (osize >= mHashes.length) {
@@ -452,7 +452,76 @@ if (index < osize) {
 
 扩容后的容量大小确定后，通过 allocArray 方法创建数组并赋值给 mHashes 和 mArray。
 
+前面在分析构造方法时，已经看到过这个方法，这里仔细分析下，该方法代码如下：
 
+```text
+private void allocArrays(final int size) {
+    if (mHashes == EMPTY_IMMUTABLE_INTS) {
+        throw new UnsupportedOperationException("ArrayMap is immutable");
+    }
+    //优先利用缓存的数组
+    if (size == (BASE_SIZE*2)) {
+        synchronized (ArrayMap.class) {
+            if (mTwiceBaseCache != null) {
+                final Object[] array = mTwiceBaseCache;
+                mArray = array;
+                mTwiceBaseCache = (Object[])array[0];
+                mHashes = (int[])array[1];
+                //将前两个元素置为空
+                array[0] = array[1] = null;
+                mTwiceBaseCacheSize--;
+                return;
+            }
+        }
+    } else if (size == BASE_SIZE) {
+        synchronized (ArrayMap.class) {
+            if (mBaseCache != null) {
+                final Object[] array = mBaseCache;
+                mArray = array;
+                mBaseCache = (Object[])array[0];
+                mHashes = (int[])array[1];
+                array[0] = array[1] = null;
+                mBaseCacheSize--;
+                return;
+            }
+        }
+    }
+    //没有缓存的数组或者缓存的数组长度不满足条件
+    mHashes = new int[size];
+    //mArray 的容量是 size 的 2 倍
+    mArray = new Object[size<<1];
+}
+```
+
+方法中，针对容量为BASE\_SIZE或者BASE\_SIZE \*2 的情况，优先利用已经缓存的数组，我们以容量为BASE\_SIZE时的情况分析，代码逻辑是：
+
+1. 将 mBaseCache 赋值给 mArray
+2. 将 mBaseCache 赋值为 mArray\[0\]
+3. 将 mHashes 赋值为 mArray\[1\]
+4. 将 mArray\[0\] mArray\[1\]的值置空
+5. 缓存数量减一
+
+要想弄清楚这段逻辑，就要知道 mBaseCache 究竟存储的究竟是什么，先来看看注释：
+
+```text
+/**
+* Caches of small array objects to avoid spamming garbage.  The cache
+* Object[] variable is a pointer to a linked list of array objects.
+* The first entry in the array is a pointer to the next array in the
+* list; the second entry is a pointer to the int[] hash code array for it.
+*/
+static Object[] mBaseCache;
+```
+
+说实话，这段注释我看了好几遍依然有点懵。大概意思是 mBaseCache 是指向链表的指针，而这个链表是由\(所有被缓存的\)数组组成的。其中 mBaseCache\[0\] 指向下一个被缓存的数组，mBaseCache\[1\] 指向的当前数组对应的 mHashes 数组。
+
+所以 mBaseCache 里的内容大概如下图所示：
+
+（画图）
+
+对照着图在看上面的逻辑就很容易理解了，mTwiceBaseCache 与 mBaseCache 除了缓存的数组长度不一致以外，其他都是相同的。
+
+那么 mBaseCache 和 mTwiceBaseCache 是什么时候被赋值的呢？一定是回收数组时。在put方法中，在分配完新数组并从旧数组拷贝完元素之后，调用了 freeArrays 方法释放旧的数组，该方法代码如下：
 
 ### freeArrays
 
@@ -487,7 +556,11 @@ private static void freeArrays(final int[] hashes, final Object[] array, final i
 }
 ```
 
+可以看到只针对数组长度为 BASE\_SIZE 和 BASE\_SIZE \*2 的情况做了缓存。还是只看 BASE\_SIZE 的情况，将 array\[1\]指向了对应的 hashes 数组，然后将 array\[0\] 指向 mBaseCache,在把 mBaseCache 指向 array,形成了链表。同时把 array 中 下标大于1的元素置空，否则会存在内存泄漏。
 
+以上就是数组被缓存和复用的逻辑，这也是我认为 ArrayMap 最难理解的地方。
+
+## get
 
 
 
