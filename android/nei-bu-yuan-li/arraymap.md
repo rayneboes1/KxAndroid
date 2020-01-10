@@ -1,8 +1,8 @@
 # ArrayMap
 
-ArrayMap 是一个支持泛型的键值对映射数据结构，功能上类似于HashMap，但它比 HashMap 对内存的利用更有效。内部基于数组和二分查找实现，查找效率不及 HashMap，适用于少量元素的情况。
+ArrayMap 是一个支持泛型的哈希表，位于 android.util 包下，实现了 Map 接口，但它比 HashMap 对内存的利用更有效。ArrayMap 内部基于数组和二分查找实现，所以查找效率不及 HashMap，适用于少量元素的情况。
 
-ArrayMap 位于 android.util 包下，实现了 Map 接口。为了更好的利用内存，ArrayMap 会随着元素的移动而缩减数组的长度，可能会导致当前的容量小于设置的容量。
+为了更好的利用内存，ArrayMap 会缓存已经创建的数组以避免频繁创建数组引起的垃圾回收。
 
 ## 属性
 
