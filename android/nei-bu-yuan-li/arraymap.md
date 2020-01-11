@@ -1,8 +1,12 @@
 # ArrayMap
 
-ArrayMap 是一个支持泛型的哈希表，位于 android.util 包下，实现了 Map 接口，但它比 HashMap 对内存的利用更有效。ArrayMap 内部基于数组和二分查找实现，所以查找效率不及 HashMap，适用于少量元素的情况。
+## 简介
 
-为了更好的利用内存，ArrayMap 会缓存已经创建的数组以避免频繁创建数组引起的垃圾回收。
+ArrayMap 是一个支持泛型的哈希表，位于 android.util 包下，实现了 Map 接口，但它比 HashMap 对内存的利用更有效。
+
+ArrayMap 内部基于数组和二分查找实现，所以查找效率不及 HashMap，适用于少量元素的情况。
+
+为了更好的利用内存，ArrayMap 会缓存已经创建的数组，以避免频繁创建数组引起的垃圾回收。
 
 ## 属性
 
@@ -19,9 +23,9 @@ Object[] mArray;
 int mSize;
 ```
 
-其中 mHashes 是一个整型数组，用于存储所有 key 的 hashCode；而 mArray 用于存储 key 和 value。
+其中 `mHashes` 是一个整型数组，用于存储所有 key 的哈希值；而 `mArray` 用于存储 key 和 value。
 
-除此之外，ArrayMap 还有一些重要的类变量和常量：
+除此之外，ArrayMap 还有一些重要的静态变量和常量：
 
 ```text
 //是否在并发修改时抛出异常
@@ -44,7 +48,7 @@ static int mTwiceBaseCacheSize;
 
 ```
 
-其中重要的是 `mBaseCache` 和 `mTwiceBaseCache` 这两个类变量，它们主要用于缓存已经创建过的数组，至于如何缓存下面会详细介绍，先来看看 ArrayMap 的构造方法。
+其中重要的是 `mBaseCache` 和 `mTwiceBaseCache` 这两个类变量，它们用于缓存已经创建过的数组，至于如何缓存下面会详细介绍，先来看看 ArrayMap 的构造方法。
 
 ## 构造方法
 
@@ -132,7 +136,9 @@ private void allocArrays(final int size) {
 
 乍一看 allocArrays 的前面一部分代码可能会有点懵，可以先不要陷在细节里面。这里我们只要知道，如果要 ArrayMap 的容量是`BASE_SIZE`或者`BASE_SIZE`的 2 倍，那么就优先利用已经缓存过的数组，如果没有缓存数组或者申请的数组长度不符合这两种情况，再创建新数组。至于数组时怎么被缓存和复用的，后面会详细解释。
 
-通过最后两行代码可以看到 mArray 的容量是 mHashes 的 2 倍，这和 ArrayMap 如何存储 key 和 value 有关，我们先看 put 方法，随着对 put 方法的研究，所有的疑问都会解开。
+通过最后两行代码可以看到 mArray 的容量是 mHashes 的 2 倍，这和 ArrayMap 如何存储 key 和 value 有关。
+
+我们先看 put 方法，随着对 put 方法的研究，所有的疑问都会解开。
 
 ## put
 
@@ -217,7 +223,7 @@ public V put(K key, V value) {
 }
 ```
 
-put 方法的主要逻辑为：**先根据 key 的 hashCode 在 mHashes 数组中查找这个哈希值是否存在，如果存在且 mArray 对应的位置也存在该 key，那么更新 value 并返回旧的 value；否则，就执行插入，必要时要进行数组扩容。**
+put 方法的主要逻辑为：**先根据 key 的哈希值在 mHashes 数组中查找这个哈希值是否存在，如果存在且 mArray 对应的位置也存在该 key，那么更新 value 并返回旧的 value；否则，就执行插入，必要时要进行数组扩容。**
 
 put 方法有点长，并且里面有很多细节，我们一段一段的看。
 
@@ -265,7 +271,7 @@ int indexOfNull() {
 }
 ```
 
-代码中先调用 `binarySearchHashes` 通过二分查找法在mHashes 中查找是否存在 0\(null 对应的hashcode\)**，**二分查找方法 `binarySearchHashes` 代码如下：
+代码中先调用 `binarySearchHashes` 通过二分查找法在`mHashes`中查找是否存在 0\(null 对应的hashcode\)**，**二分查找方法 `binarySearchHashes` 代码如下：
 
 ```text
 private static int binarySearchHashes(int[] hashes, int N, int hash) {
@@ -305,29 +311,29 @@ static int binarySearch(int[] array, int size, int value) {
 }
 ```
 
-关于这个方法在[分析 SparseArray 时](sparsearray.md#put)已经解释过它的巧妙之处，当没有找到目标值时，会将**第一个大于目标值的下标取反后返回，这样调用方对返回结果再次取反后就可以得到这个下标值，这样做同时也保证了mHashes 是有序的。**
+关于这个方法在[分析 SparseArray 时](sparsearray.md#put)已经解释过它的巧妙之处，当没有找到目标值时，会将**第一个大于目标值的下标取反后返回，这样调用方对返回结果再次取反后就可以得到这个下标值，这样做同时也可以保证 mHashes 是有序的。**
 
-如果在 mHashes 数组中找到了hash，并且在 mArray 中的对应位置没有找到key，那么还需要进一步进行搜索，为了阅读方便，我把这部分代码再贴一遍：
+如果在 `mHashes` 数组中找到了hash，但是在 mArray 中的对应位置没有找到key，那么还需要进一步进行搜索，为了阅读方便，我把这部分代码再贴一遍：
 
 ```text
-    // mHashes 数组中存在 0，但 mArray 对应的位置 key 不是 null
-    // 存在哈希冲突，继续向后查找
-    int end;
-    for (end = index + 1; end < N && mHashes[end] == 0; end++) {
-        if (null == mArray[end << 1]) return end;
-    }
+// mHashes 数组中存在 0，但 mArray 对应的位置 key 不是 null
+// 存在哈希冲突，继续向后查找
+int end;
+for (end = index + 1; end < N && mHashes[end] == 0; end++) {
+    if (null == mArray[end << 1]) return end;
+}
 
-    // mHashes 数组中存在 0，但 mArray 对应的位置 key 不是 null
-    // 存在哈希冲突，继续向前查找
-    for (int i = index - 1; i >= 0 && mHashes[i] == 0; i--) {
-        if (null == mArray[i << 1]) return i;
-    }
+// mHashes 数组中存在 0，但 mArray 对应的位置 key 不是 null
+// 存在哈希冲突，继续向前查找
+for (int i = index - 1; i >= 0 && mHashes[i] == 0; i--) {
+    if (null == mArray[i << 1]) return i;
+}
 
-    // 没有找到，把第一个等于 hash 的下标取反后返回
-    return ~end;
+// 没有找到，把第一个等于 hash 的下标取反后返回
+return ~end;
 ```
 
-我们可以举个例子来捋一下上面代码的逻辑，假设 mHashes 中的元素为\[-2,-1,0,0,0,0,3,4\]（也就是说有四个key的哈希值都是0），要查找的哈希值是0，那么通过二分查找法，回先返回下标3，也就是第二个 0，如果 mArray 中的对应位置的 key不是null，那么就会执行上面代码的逻辑，先向后搜索，假设直到最后一个0依然没有在 mArray 中找到 null，那么此时 **end=6,**也就是元素 3 的位置。
+我们可以举个例子来捋一下上面代码的逻辑，假设 mHashes 中的元素为\[-2,-1,0,0,0,0,3,4\]（也就是说有四个 key 的哈希值都是0），要查找的哈希值是0，那么通过二分查找法，回先返回下标3，也就是第二个 0，如果 mArray 中的对应位置的 key不是null，那么就会执行上面代码的逻辑，先向后搜索，假设直到最后一个0依然没有在 mArray 中找到 null，那么此时 **end=6,**也就是元素 3 的位置。
 
 接下来向前搜索，假设也没有找到 null，那么此时就返回-7（对6按位取反的结果）。
 
