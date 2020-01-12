@@ -8,6 +8,8 @@ ArrayMap 内部基于数组和二分查找实现，所以查找效率不及 Hash
 
 为了更好的利用内存，ArrayMap 会缓存已经创建的数组，以避免频繁创建数组引起的垃圾回收。
 
+ArrayMap 源码地址：[https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/util/ArrayMap.java](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/util/ArrayMap.java)
+
 ## 属性
 
 ArrayMap 的属性主要有下面四个：
