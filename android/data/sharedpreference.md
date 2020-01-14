@@ -650,6 +650,9 @@ writeToFile
 
 ```text
 
+private static final LinkedList<Runnable> sFinishers = new LinkedList<>();
+private static final LinkedList<Runnable> sWork = new LinkedList<>();
+private static boolean sCanDelay = true;
 
 /**
      * Queue a work-runnable for processing asynchronously.
@@ -668,6 +671,92 @@ writeToFile
                 handler.sendEmptyMessageDelayed(QueuedWorkHandler.MSG_RUN, DELAY);
             } else {
                 handler.sendEmptyMessage(QueuedWorkHandler.MSG_RUN);
+            }
+        }
+    }
+    
+    
+//创建新的 HanlderThread
+private static Handler getHandler() {
+        synchronized (sLock) {
+            if (sHandler == null) {
+                HandlerThread handlerThread = new HandlerThread("queued-work-looper",
+                        Process.THREAD_PRIORITY_FOREGROUND);
+                handlerThread.start();
+
+                sHandler = new QueuedWorkHandler(handlerThread.getLooper());
+            }
+            return sHandler;
+        }
+    }
+    
+public static void queue(Runnable work, boolean shouldDelay) {
+        Handler handler = getHandler();
+
+        synchronized (sLock) {
+            sWork.add(work);
+
+            if (shouldDelay && sCanDelay) {
+                handler.sendEmptyMessageDelayed(QueuedWorkHandler.MSG_RUN, DELAY);
+            } else {
+                handler.sendEmptyMessage(QueuedWorkHandler.MSG_RUN);
+            }
+        }
+    }
+    
+    
+    
+@UnsupportedAppUsage
+    public static void addFinisher(Runnable finisher) {
+        synchronized (sLock) {
+            sFinishers.add(finisher);
+        }
+    }
+    
+    
+    
+    private static class QueuedWorkHandler extends Handler {
+        static final int MSG_RUN = 1;
+
+        QueuedWorkHandler(Looper looper) {
+            super(looper);
+        }
+
+        public void handleMessage(Message msg) {
+            if (msg.what == MSG_RUN) {
+                processPendingWork();
+            }
+        }
+    }
+    
+    
+    private static void processPendingWork() {
+        long startTime = 0;
+
+        if (DEBUG) {
+            startTime = System.currentTimeMillis();
+        }
+
+        synchronized (sProcessingWork) {
+            LinkedList<Runnable> work;
+
+            synchronized (sLock) {
+                work = (LinkedList<Runnable>) sWork.clone();
+                sWork.clear();
+
+                // Remove all msg-s as all work will be processed now
+                getHandler().removeMessages(QueuedWorkHandler.MSG_RUN);
+            }
+
+            if (work.size() > 0) {
+                for (Runnable w : work) {
+                    w.run();
+                }
+
+                if (DEBUG) {
+                    Log.d(LOG_TAG, "processing " + work.size() + " items took " +
+                            +(System.currentTimeMillis() - startTime) + " ms");
+                }
             }
         }
     }
