@@ -475,6 +475,7 @@ private static class MemoryCommitResult {
                 wasEmpty = mDiskWritesInFlight == 1;
             }
             if (wasEmpty) {
+                //在当前线程执行
                 writeToDiskRunnable.run();
                 return;
             }
@@ -770,11 +771,37 @@ FileUtils
 
 
 
+```text
+public boolean commit() {
+            long startTime = 0;
+
+            if (DEBUG) {
+                startTime = System.currentTimeMillis();
+            }
+
+            MemoryCommitResult mcr = commitToMemory();
+
+            SharedPreferencesImpl.this.enqueueDiskWrite(
+                mcr, null /* sync write on this thread okay */);
+            try {
+                mcr.writtenToDiskLatch.await();
+            } catch (InterruptedException e) {
+                return false;
+            } finally {
+                if (DEBUG) {
+                    Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
+                            + " committed after " + (System.currentTimeMillis() - startTime)
+                            + " ms");
+                }
+            }
+            notifyListeners(mcr);
+            return mcr.writeToDiskResult;
+        }
+```
 
 
 
-
-
+QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行。见 ActivityThread
 
 [SharedPreferences灵魂拷问之原理](https://juejin.im/post/5df7af66e51d4557f17fb4f7)
 
