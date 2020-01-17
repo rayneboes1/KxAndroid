@@ -1,5 +1,7 @@
 # SharedPreference
 
+## getSharedPreferences
+
 ContextImpl 中的方法
 
 ```text
