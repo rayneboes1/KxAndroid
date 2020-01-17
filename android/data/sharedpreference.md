@@ -120,9 +120,22 @@ public SharedPreferences getSharedPreferences(File file, int mode) {
 }
 ```
 
+创建前先进行了一些权限检查，checkMode 用于检查 sp 的模式，MODE\_WORLD\_READABLE 和 MODE\_WORLD\_WRITEABLE 在7.0及以后会抛出异常。
 
+```text
+private void checkMode(int mode) {
+    if (getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.N) {
+        if ((mode & MODE_WORLD_READABLE) != 0) {
+            throw new SecurityException("MODE_WORLD_READABLE no longer supported");
+        }
+        if ((mode & MODE_WORLD_WRITEABLE) != 0) {
+            throw new SecurityException("MODE_WORLD_WRITEABLE no longer supported");
+        }
+    }
+}
+```
 
-可以看到 SharePreferences 的实现类是`SharedPreferencesImpl` 构造方法的源码如下：
+创建 sp SharePreferences 的实现类是`SharedPreferencesImpl`构造方法的源码如下：
 
 ```text
 SharedPreferencesImpl(File file, int mode) {
@@ -140,6 +153,7 @@ private void startLoadFromDisk() {
     synchronized (mLock) {
         mLoaded = false;
     }
+    //开启一个线程读取文件
     new Thread("SharedPreferencesImpl-load") {
         public void run() {
             loadFromDisk();
