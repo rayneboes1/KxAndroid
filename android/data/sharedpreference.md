@@ -199,7 +199,7 @@ private void loadFromDisk() {
     }
 
     synchronized (mLock) {
-        //设置读取状态为true
+        //读取完成后设置读取状态为true
         mLoaded = true;
         mThrowable = thrown;
 
@@ -221,7 +221,7 @@ private void loadFromDisk() {
         } catch (Throwable t) {
             mThrowable = t;
         } finally {
-            //通知正在等待的线程
+            //通知所有可能正在等待的线程
             mLock.notifyAll();
         }
     }
