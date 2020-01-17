@@ -339,7 +339,9 @@ public Editor putString(String key, @Nullable String value) {
 @Override
 public void apply() {
     final long startTime = System.currentTimeMillis();
+    //先提交到内存
     final MemoryCommitResult mcr = commitToMemory();
+    
     final Runnable awaitCommit = new Runnable() {
             @Override
             public void run() {
@@ -371,9 +373,9 @@ public void apply() {
 }
 ```
 
+先通过 commitToMemory 方法把修改提交至内存中，代码如下：
 
-
-commitToMemory
+#### commitToMemory
 
 ```text
 // Returns true if any changes were made
@@ -388,6 +390,7 @@ private MemoryCommitResult commitToMemory() {
         // We optimistically don't make a deep copy until
         // a memory commit comes in when we're already
         // writing to disk.
+        //当前有正在写入的任务在执行
         if (mDiskWritesInFlight > 0) {
             // We can't modify our mMap as a currently
             // in-flight write owns it.  Clone it before
@@ -395,6 +398,7 @@ private MemoryCommitResult commitToMemory() {
             // noinspection unchecked
             mMap = new HashMap<String, Object>(mMap);
         }
+        //mapToWriteToDisk 为所有key value 对
         mapToWriteToDisk = mMap;
         mDiskWritesInFlight++;
 
@@ -433,6 +437,7 @@ private MemoryCommitResult commitToMemory() {
                             continue;
                         }
                     }
+                    //将新增加的key和value放到即将写入的map中
                     mapToWriteToDisk.put(k, v);
                 }
 
@@ -445,6 +450,7 @@ private MemoryCommitResult commitToMemory() {
             mModified.clear();
 
             if (changesMade) {
+                //自增
                 mCurrentMemoryStateGeneration++;
             }
 
@@ -456,19 +462,25 @@ private MemoryCommitResult commitToMemory() {
 }
 ```
 
-MemoryCommitResult
+该方法返回的是一个 `MemoryCommitResult` 对象，MemoryCommitResult 是 SharedPreferencesImpl 的静态内部类：
 
 ```text
 // Return value from EditorImpl#commitToMemory()
 private static class MemoryCommitResult {
+    //标识当前内存的版本
     final long memoryStateGeneration;
+    //要修改的key
     @Nullable final List<String> keysModified;
+    
     @Nullable final Set<OnSharedPreferenceChangeListener> listeners;
+    //要写入文件的map
     final Map<String, Object> mapToWriteToDisk;
+    //lock
     final CountDownLatch writtenToDiskLatch = new CountDownLatch(1);
 
     @GuardedBy("mWritingToDiskLock")
     volatile boolean writeToDiskResult = false;
+    
     boolean wasWritten = false;
 
     private MemoryCommitResult(long memoryStateGeneration, @Nullable List<String> keysModified,
@@ -488,7 +500,7 @@ private static class MemoryCommitResult {
 }
 ```
 
-
+#### enqueDiskWrite
 
 ```text
 /**
@@ -531,6 +543,8 @@ private static class MemoryCommitResult {
         if (isFromSyncCommit) {
             boolean wasEmpty = false;
             synchronized (mLock) {
+                // mDiskWritesInFlight 在提交至内存时会自增
+                // 为 1 说明此是没有其他的任务要写入
                 wasEmpty = mDiskWritesInFlight == 1;
             }
             if (wasEmpty) {
@@ -548,42 +562,32 @@ writeToFile
 
 ```text
 @GuardedBy("mWritingToDiskLock")
-    private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
-        long startTime = 0;
-        long existsTime = 0;
-        long backupExistsTime = 0;
-        long outputStreamCreateTime = 0;
-        long writeTime = 0;
-        long fsyncTime = 0;
-        long setPermTime = 0;
-        long fstatTime = 0;
-        long deleteTime = 0;
+private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
+    long startTime = 0;
+    long existsTime = 0;
+    long backupExistsTime = 0;
+    long outputStreamCreateTime = 0;
+    long writeTime = 0;
+    long fsyncTime = 0;
+    long setPermTime = 0;
+    long fstatTime = 0;
+    long deleteTime = 0;
 
-        if (DEBUG) {
-            startTime = System.currentTimeMillis();
-        }
+    boolean fileExists = mFile.exists();
 
-        boolean fileExists = mFile.exists();
+    // Rename the current file so it may be used as a backup during the next read
+    if (fileExists) {
+        boolean needsWrite = false;
 
-        if (DEBUG) {
-            existsTime = System.currentTimeMillis();
-
-            // Might not be set, hence init them to a default value
-            backupExistsTime = existsTime;
-        }
-
-        // Rename the current file so it may be used as a backup during the next read
-        if (fileExists) {
-            boolean needsWrite = false;
-
-            // Only need to write if the disk state is older than this commit
-            if (mDiskStateGeneration < mcr.memoryStateGeneration) {
+        // Only need to write if the disk state is older than this commit
+        if (mDiskStateGeneration < mcr.memoryStateGeneration) {
                 if (isFromSyncCommit) {
                     needsWrite = true;
                 } else {
                     synchronized (mLock) {
                         // No need to persist intermediate states. Just wait for the latest state to
                         // be persisted.
+                        //没有必要立刻写入，而是等待最新的提交
                         if (mCurrentMemoryStateGeneration == mcr.memoryStateGeneration) {
                             needsWrite = true;
                         }
@@ -598,14 +602,8 @@ writeToFile
 
             boolean backupFileExists = mBackupFile.exists();
 
-            if (DEBUG) {
-                backupExistsTime = System.currentTimeMillis();
-            }
-
             if (!backupFileExists) {
                 if (!mFile.renameTo(mBackupFile)) {
-                    Log.e(TAG, "Couldn't rename file " + mFile
-                          + " to backup file " + mBackupFile);
                     mcr.setDiskWriteResult(false, false);
                     return;
                 }
@@ -620,14 +618,11 @@ writeToFile
         try {
             FileOutputStream str = createFileOutputStream(mFile);
 
-            if (DEBUG) {
-                outputStreamCreateTime = System.currentTimeMillis();
-            }
-
             if (str == null) {
                 mcr.setDiskWriteResult(false, false);
                 return;
             }
+            //写入数据
             XmlUtils.writeMapXml(mcr.mapToWriteToDisk, str);
 
             writeTime = System.currentTimeMillis();
@@ -639,10 +634,6 @@ writeToFile
             str.close();
             ContextImpl.setFilePermissionsFromMode(mFile.getPath(), mMode, 0);
 
-            if (DEBUG) {
-                setPermTime = System.currentTimeMillis();
-            }
-
             try {
                 final StructStat stat = Os.stat(mFile.getPath());
                 synchronized (mLock) {
@@ -653,39 +644,17 @@ writeToFile
                 // Do nothing
             }
 
-            if (DEBUG) {
-                fstatTime = System.currentTimeMillis();
-            }
 
             // Writing was successful, delete the backup file if there is one.
             mBackupFile.delete();
-
-            if (DEBUG) {
-                deleteTime = System.currentTimeMillis();
-            }
 
             mDiskStateGeneration = mcr.memoryStateGeneration;
 
             mcr.setDiskWriteResult(true, true);
 
-            if (DEBUG) {
-                Log.d(TAG, "write: " + (existsTime - startTime) + "/"
-                        + (backupExistsTime - startTime) + "/"
-                        + (outputStreamCreateTime - startTime) + "/"
-                        + (writeTime - startTime) + "/"
-                        + (fsyncTime - startTime) + "/"
-                        + (setPermTime - startTime) + "/"
-                        + (fstatTime - startTime) + "/"
-                        + (deleteTime - startTime));
-            }
-
             long fsyncDuration = fsyncTime - writeTime;
             mSyncTimes.add((int) fsyncDuration);
             mNumSync++;
-
-            if (DEBUG || mNumSync % 1024 == 0 || fsyncDuration > MAX_FSYNC_DURATION_MILLIS) {
-                mSyncTimes.log(TAG, "Time required to fsync " + mFile + ": ");
-            }
 
             return;
         } catch (XmlPullParserException e) {
