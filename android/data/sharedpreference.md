@@ -2,11 +2,12 @@
 
 ## getSharedPreferences
 
-ContextImpl 中的方法
+通过 Context 的 getSharedPreferences 方法获取 Sp 实例，其实现在 ContextImpl 中，方法代码如下：
 
 ```text
 @Override
 public SharedPreferences getSharedPreferences(String name, int mode) {
+    // 处理 name 为 null 的情况
     // At least one application in the world actually passes in a null
     // name.  This happened to work because when we generated the file name
     // we would stringify it to "null.xml".  Nice.
@@ -20,19 +21,24 @@ public SharedPreferences getSharedPreferences(String name, int mode) {
     File file;
     synchronized (ContextImpl.class) {
         if (mSharedPrefsPaths == null) {
+            //创建缓存的 map
             mSharedPrefsPaths = new ArrayMap<>();
         }
+        //先从缓存中获取 File 
         file = mSharedPrefsPaths.get(name);
         if (file == null) {
+            //缓存中没有，先生成file
             file = getSharedPreferencesPath(name);
+            //加入缓存
             mSharedPrefsPaths.put(name, file);
         }
     }
+    //通过文件生成 SharedPreferences
     return getSharedPreferences(file, mode);
 }
 ```
 
-生成file时调用了getSharedPreferencesPath
+生成 file 时调用了 `getSharedPreferencesPath`
 
 ```text
 @Override
@@ -40,6 +46,10 @@ public File getSharedPreferencesPath(String name) {
     return makeFilename(getPreferencesDir(), name + ".xml");
 }
 ```
+
+获取sp目录，也就是 data 下的 "shared\_prefs"目录下。
+
+
 
 ```text
 private File getPreferencesDir() {
@@ -53,7 +63,25 @@ private File getPreferencesDir() {
 }
 ```
 
-调用了getSharedPreferences\(file, mode\):
+makeFilename 方法如下：
+
+```text
+private File makeFilename(File base, String name) {
+    //文件名包含分隔符时抛出异常
+    if (name.indexOf(File.separatorChar) < 0) {
+        final File res = new File(base, name);
+           return res;
+    }
+    throw new IllegalArgumentException(
+            "File " + name + " contains a path separator");
+}
+```
+
+以上是生成 file 对象的过程。
+
+## 创建 SharedPreferences
+
+创建 Sp 实例时调用了getSharedPreferences\(file, mode\):
 
 ```text
 @Override
@@ -61,8 +89,10 @@ public SharedPreferences getSharedPreferences(File file, int mode) {
     SharedPreferencesImpl sp;
     synchronized (ContextImpl.class) {
         final ArrayMap<File, SharedPreferencesImpl> cache = getSharedPreferencesCacheLocked();
+        // 先从缓存中获取
         sp = cache.get(file);
         if (sp == null) {
+            //一些权限检查
             checkMode(mode);
             if (getApplicationInfo().targetSdkVersion >= android.os.Build.VERSION_CODES.O) {
                 if (isCredentialProtectedStorage()
@@ -74,6 +104,7 @@ public SharedPreferences getSharedPreferences(File file, int mode) {
             }
             //创建 SharedPreferences 实例
             sp = new SharedPreferencesImpl(file, mode);
+            // 放入缓存
             cache.put(file, sp);
             return sp;
         }
@@ -89,7 +120,7 @@ public SharedPreferences getSharedPreferences(File file, int mode) {
 }
 ```
 
-## 创建 SharedPreferences
+
 
 可以看到 SharePreferences 的实现类是`SharedPreferencesImpl` 构造方法的源码如下：
 
