@@ -241,7 +241,7 @@ private void loadFromDisk() {
 
 ## 读取值
 
-getString 在 SharedPreferencesImpl 中：
+getString 在 SharedPreferencesImpl 中方法代码为：
 
 ```text
 public String getString(String key, @Nullable String defValue) {
@@ -253,7 +253,7 @@ public String getString(String key, @Nullable String defValue) {
 }
 ```
 
-调用了 awaitLoadedLocked 方法在文件还没有准备好时进行等待：
+在读取前，先调用了 awaitLoadedLocked 方法在文件还没有准备好时进行等待：
 
 ```text
 private final Object mLock = new Object();
@@ -261,7 +261,7 @@ private final Object mLock = new Object();
 private void awaitLoadedLocked() {
     while (!mLoaded) {
         try {
-            //等待
+            //没有读取成功，先等待
             mLock.wait();
         } catch (InterruptedException unused) {
         }
@@ -272,11 +272,13 @@ private void awaitLoadedLocked() {
 }
 ```
 
-而上面读取成功后会调用 mLock.notifyAll 方法，从而读取操作可以继续。
+而上面 loadFromDisk 读取成功后会调用 mLock.notifyAll 方法，从而读取操作可以继续，也就是从map中根据key获取对应的值。
 
 ## 写入值
 
-在写入时，需要先调用 edit方法，返回一个 Editor 对象。
+### 创建 Editor
+
+在写入时，需要先调用 edit 方法，获取一个 Editor 对象。
 
 ```text
 @Override
@@ -296,9 +298,7 @@ public Editor edit() {
 }
 ```
 
-当 sp 可用时，创建了一个 Editor 实现类
-
-`Editor`的实现类是 EditorImpl，是`SharedPreferencesImpl`的内部类。
+当 sp 可用时，创建了一个 EditorImpl 对象并返回。EditorImpl 是`Editor`的实现类，同时是`SharedPreferencesImpl`的内部类。
 
 ```text
 public final class EditorImpl implements Editor {
@@ -311,28 +311,34 @@ public final class EditorImpl implements Editor {
     private boolean mClear = false;
     
     
-    
-    //.....
-    
-    @Override
-    public Editor putString(String key, @Nullable String value) {
-        synchronized (mEditorLock) {
-            mModified.put(key, value);
-            return this;
-        }
+    //putXxx 方法.....
+}
+```
+
+可以看到在  Editor 内部时先把值放入到一个 HashMap 中，接下来，我们可能会调用 apply 或 commit 来讲写入同步到sp。
+
+### putXxx
+
+这里以 putString 方法为例：
+
+```text
+@Override
+public Editor putString(String key, @Nullable String value) {
+    synchronized (mEditorLock) {
+        mModified.put(key, value);
+        return this;
     }
 }
 ```
 
-可以看到在 Editor 内部时先把值放入到一个 HashMap 中，接下来，我们可能会调用 apply 或 commit 来讲写入同步到sp。
+只是把要放入的值先放入到 mModified 这个 HashMap 中。这时候需要调用 apply 或者 commit 进行提交，先来看下 apply 的逻辑。
 
-先来看看 apply
+### apply
 
 ```text
 @Override
 public void apply() {
     final long startTime = System.currentTimeMillis();
-
     final MemoryCommitResult mcr = commitToMemory();
     final Runnable awaitCommit = new Runnable() {
             @Override
@@ -341,11 +347,6 @@ public void apply() {
                     mcr.writtenToDiskLatch.await();
                 } catch (InterruptedException ignored) {
                 
-                }
-                if (DEBUG && mcr.wasWritten) {
-                    Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
-                            + " applied after " + (System.currentTimeMillis() - startTime)
-                            + " ms");
                 }
            }
     };
