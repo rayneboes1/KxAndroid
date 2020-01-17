@@ -148,7 +148,11 @@ SharedPreferencesImpl(File file, int mode) {
         //从文件中读取
         startLoadFromDisk();
 }
+```
 
+在构造方法中，调用了 startLoadFromDisk 方法，在该方法中，先将读取状态标识置为false，然后开启了一个线程进行读取任务：
+
+```text
 private void startLoadFromDisk() {
     synchronized (mLock) {
         mLoaded = false;
@@ -160,9 +164,14 @@ private void startLoadFromDisk() {
         }
     }.start();
 }
+```
 
+读取任务在 loadFromDisk 方法中，代码为：
+
+```text
 private void loadFromDisk() {
     synchronized (mLock) {
+        //已经读取成功，直接返回
         if (mLoaded) {
             return;
         }
@@ -227,6 +236,8 @@ private void loadFromDisk() {
     }
 }
 ```
+
+主要逻辑是读取XML文件并将其解析为 Map 对象，然后将读取标识置为 true。sp创建后，就可以进行读取和写入了。
 
 ## 读取值
 
