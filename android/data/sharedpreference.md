@@ -298,24 +298,7 @@ public Editor edit() {
 }
 ```
 
-当 sp 可用时，创建了一个 EditorImpl 对象并返回。EditorImpl 是`Editor`的实现类，同时是`SharedPreferencesImpl`的内部类。
-
-```text
-public final class EditorImpl implements Editor {
-    private final Object mEditorLock = new Object();
-
-    @GuardedBy("mEditorLock")
-    private final Map<String, Object> mModified = new HashMap<>();
-
-    @GuardedBy("mEditorLock")
-    private boolean mClear = false;
-    
-    
-    //putXxx 方法.....
-}
-```
-
-可以看到在  Editor 内部时先把值放入到一个 HashMap 中，接下来，我们可能会调用 apply 或 commit 来讲写入同步到sp。
+当 sp 可用时，创建了一个 `EditorImpl` 对象并返回。`EditorImpl` 是`Editor`的实现类，同时是`SharedPreferencesImpl`的内部类。
 
 ### putXxx
 
@@ -331,14 +314,15 @@ public Editor putString(String key, @Nullable String value) {
 }
 ```
 
-只是把要放入的值先放入到 mModified 这个 HashMap 中。这时候需要调用 apply 或者 commit 进行提交，先来看下 apply 的逻辑。
+只是把要放入的值先放入到 mModified 这个 HashMap 中,，接下来需要调用 apply 或者 commit 进行提交，先来看下 apply 的逻辑。
 
 ### apply
+
+apply 的代码如下，略去了一些 log 信息：
 
 ```text
 @Override
 public void apply() {
-    final long startTime = System.currentTimeMillis();
     //先提交到内存
     final MemoryCommitResult mcr = commitToMemory();
     
@@ -373,17 +357,23 @@ public void apply() {
 }
 ```
 
-先通过 commitToMemory 方法把修改提交至内存中，代码如下：
+apply 逻辑是：
+
+1. 通过 commitToMemory 方法把修改提交至内存中
+2. 通过 enqueueDiskWrite 执行磁盘写入
 
 #### commitToMemory
 
+这个方法用于将之前所有的put操作提交到内存的Sp中，并返回一个 MemoryCommitResult 对象提交信息，代码如下：
+
 ```text
-// Returns true if any changes were made
 private MemoryCommitResult commitToMemory() {
     // 当前内存中sp的版本号
     long memoryStateGeneration;
+    //所有修改的key
     List<String> keysModified = null;
     Set<OnSharedPreferenceChangeListener> listeners = null;
+    //要写入磁盘的map
     Map<String, Object> mapToWriteToDisk;
 
     synchronized (SharedPreferencesImpl.this.mLock) {
@@ -469,7 +459,7 @@ private MemoryCommitResult commitToMemory() {
 private static class MemoryCommitResult {
     //标识当前内存的版本
     final long memoryStateGeneration;
-    //要修改的key
+    //发生修改的key集合
     @Nullable final List<String> keysModified;
     
     @Nullable final Set<OnSharedPreferenceChangeListener> listeners;
