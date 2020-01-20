@@ -399,7 +399,7 @@ private MemoryCommitResult commitToMemory() {
     // 当前内存中sp的版本号
     long memoryStateGeneration;
     
-    //所有修改的key
+    //所有修改的key，用于通知监听者
     List<String> keysModified = null;
     
     Set<OnSharedPreferenceChangeListener> listeners = null;
