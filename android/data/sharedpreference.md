@@ -595,18 +595,18 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
 
         // Only need to write if the disk state is older than this commit
         if (mDiskStateGeneration < mcr.memoryStateGeneration) {
-                if (isFromSyncCommit) {
-                    needsWrite = true;
-                } else {
-                    synchronized (mLock) {
-                        // No need to persist intermediate states. Just wait for the latest state to
-                        // be persisted.
-                        //没有必要立刻写入，而是等待最新的提交
-                        if (mCurrentMemoryStateGeneration == mcr.memoryStateGeneration) {
-                            needsWrite = true;
-                        }
+            if (isFromSyncCommit) {
+                needsWrite = true;
+            } else {
+                synchronized (mLock) {
+                    // No need to persist intermediate states. Just wait for the latest state to
+                    // be persisted.
+                    //没有必要立刻写入，而是等待最新的提交
+                    if (mCurrentMemoryStateGeneration == mcr.memoryStateGeneration) {
+                        needsWrite = true;
                     }
                 }
+            }
         }
 
         if (!needsWrite) {
