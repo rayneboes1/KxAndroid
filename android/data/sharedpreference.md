@@ -364,7 +364,7 @@ apply 逻辑是：
 
 #### commitToMemory
 
-这个方法用于将之前所有的put操作提交到内存的Sp中，并返回一个 MemoryCommitResult 对象提交信息，代码如下：
+这个方法用于将之前所有的 put 操作提交到内存的Sp中，并返回一个 MemoryCommitResult 对象提交信息，代码如下：
 
 ```text
 private MemoryCommitResult commitToMemory() {
