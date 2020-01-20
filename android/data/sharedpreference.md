@@ -345,7 +345,7 @@ public Editor clear() {
 
 put remove 操作的是 EditorImpl 的 mModified，而 clear 方法只是将清除标记置为 true。另外这些方法都返回 Editor 对象，方便链式调用。
 
-要使这些更改生效，就需要调用 apply 或者 commit 进行提交，先来看下 apply 的逻辑。
+要使这些更改生效，就需要调用 apply 或者 commit 进行提交，先来看下 apply。
 
 ### EditorImpl\#apply\(\)
 
@@ -450,6 +450,7 @@ private MemoryCommitResult commitToMemory() {
                     if (mapToWriteToDisk.containsKey(k)) {
                         Object existingValue = mapToWriteToDisk.get(k);
                         if (existingValue != null && existingValue.equals(v)) {
+                            //新值与旧值相等，跳过
                             continue;
                         }
                     }
@@ -466,10 +467,9 @@ private MemoryCommitResult commitToMemory() {
             mModified.clear();
 
             if (changesMade) {
-                //自增
+                //版本自增
                 mCurrentMemoryStateGeneration++;
             }
-
             memoryStateGeneration = mCurrentMemoryStateGeneration;
         }
     }
@@ -478,7 +478,9 @@ private MemoryCommitResult commitToMemory() {
 }
 ```
 
-该方法返回的是一个 `MemoryCommitResult` 对象，MemoryCommitResult 是 SharedPreferencesImpl 的静态内部类：
+该方法的逻辑比较容易理解，根据 Editor 的 mModified 中修改的key，来更新内存中 map 的对应的key，并记录发生修改的key，以便通知监听者。
+
+方法返回的是一个 `MemoryCommitResult` 对象，`MemoryCommitResult` 是 SharedPreferencesImpl 的静态内部类：
 
 ```text
 // Return value from EditorImpl#commitToMemory()
@@ -516,69 +518,65 @@ private static class MemoryCommitResult {
 }
 ```
 
-#### enqueDiskWrite
+将变更提交的内存后，调用了 enqueDiskWrite 进行文件写入。
+
+#### SharedPreferencesImpl\#enqueDiskWrite
 
 ```text
-/**
-     * Enqueue an already-committed-to-memory result to be written
-     * to disk.
-     *
-     * They will be written to disk one-at-a-time in the order
-     * that they're enqueued.
-     *
-     * @param postWriteRunnable if non-null, we're being called
-     *   from apply() and this is the runnable to run after
-     *   the write proceeds.  if null (from a regular commit()),
-     *   then we're allowed to do this disk write on the main
-     *   thread (which in addition to reducing allocations and
-     *   creating a background thread, this has the advantage that
-     *   we catch them in userdebug StrictMode reports to convert
-     *   them where possible to apply() ...)
-     */
-    private void enqueueDiskWrite(final MemoryCommitResult mcr,
-                                  final Runnable postWriteRunnable) {
-        final boolean isFromSyncCommit = (postWriteRunnable == null);
+private void enqueueDiskWrite(final MemoryCommitResult mcr,
+                              final Runnable postWriteRunnable) {
+    //是否是 commit                          
+    final boolean isFromSyncCommit = (postWriteRunnable == null);
 
-        final Runnable writeToDiskRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    synchronized (mWritingToDiskLock) {
-                        writeToFile(mcr, isFromSyncCommit);
-                    }
-                    synchronized (mLock) {
-                        mDiskWritesInFlight--;
-                    }
-                    if (postWriteRunnable != null) {
-                        postWriteRunnable.run();
-                    }
+    final Runnable writeToDiskRunnable = new Runnable() {
+            @Override
+            public void run() {
+                synchronized (mWritingToDiskLock) {
+                    //写入文件
+                    writeToFile(mcr, isFromSyncCommit);
                 }
-            };
+                synchronized (mLock) {
+                    mDiskWritesInFlight--;
+                }
+                if (postWriteRunnable != null) {
+                    //执行写入后的任务
+                    postWriteRunnable.run();
+                }
+            }
+        };
 
-        // Typical #commit() path with fewer allocations, doing a write on
-        // the current thread.
-        if (isFromSyncCommit) {
-            boolean wasEmpty = false;
-            synchronized (mLock) {
-                // mDiskWritesInFlight 在提交至内存时会自增
-                // 为 1 说明此是没有其他的任务要写入
-                wasEmpty = mDiskWritesInFlight == 1;
-            }
-            if (wasEmpty) {
-                //在当前线程执行
-                writeToDiskRunnable.run();
-                return;
-            }
+    // Typical #commit() path with fewer allocations, doing a write on
+    // the current thread.
+    if (isFromSyncCommit) {
+        boolean wasEmpty = false;
+        synchronized (mLock) {
+            // mDiskWritesInFlight 在提交至内存时会自增
+            // 为 1 说明此是没有其他的任务要写入
+            wasEmpty = mDiskWritesInFlight == 1;
         }
-
-        QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
+        if (wasEmpty) {
+            //在主线程中直接执行写入
+            writeToDiskRunnable.run();
+            return;
+        }
     }
+
+    QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
+}
 ```
 
-writeToFile
+方法中第二个参数是一个 Runnable ，用于在文件写入后执行。如果这个参数为null，那么此次调用来自 commit\(\) 方法，否则此次调用就来自 apply 方法，在上面的 apply 方法中，我们也看到它传了一个 Runnable。
+
+上面方法中的 writeToDiskRunnable 定义了文件写入的过程：先调用 writeToFile 将内存的SP写入文件，然后将 mDiskWritesInFlight 减一，最后在执行 postWriteRunnable。
+
+不过 writeToDiskRunnable  的执行时机却暗藏玄机，如果此调用来自 commit\(\) 方法，并且当前只有这次写入需要执行，那么就会在主线程执行这次文件写入；其他情况都会通过 QueuedWork 把写入任务加入队列中，稍后再写入。关于 QueuedWork 稍后再介绍，先来看看 writeToFile 方法。
+
+### SharedPreferencesImpl\#writeToFile\(\)
 
 ```text
 @GuardedBy("mWritingToDiskLock")
 private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
+    // 一些时间点，主要用于日志输出
     long startTime = 0;
     long existsTime = 0;
     long backupExistsTime = 0;
@@ -609,87 +607,85 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
                         }
                     }
                 }
-            }
-
-            if (!needsWrite) {
-                mcr.setDiskWriteResult(false, true);
-                return;
-            }
-
-            boolean backupFileExists = mBackupFile.exists();
-
-            if (!backupFileExists) {
-                if (!mFile.renameTo(mBackupFile)) {
-                    mcr.setDiskWriteResult(false, false);
-                    return;
-                }
-            } else {
-                mFile.delete();
-            }
         }
 
-        // Attempt to write the file, delete the backup and return true as atomically as
-        // possible.  If any exception occurs, delete the new file; next time we will restore
-        // from the backup.
-        try {
-            FileOutputStream str = createFileOutputStream(mFile);
+        if (!needsWrite) {
+            mcr.setDiskWriteResult(false, true);
+            return;
+        }
 
-            if (str == null) {
+        boolean backupFileExists = mBackupFile.exists();
+
+        if (!backupFileExists) {
+            if (!mFile.renameTo(mBackupFile)) {
                 mcr.setDiskWriteResult(false, false);
                 return;
             }
-            //写入数据
-            XmlUtils.writeMapXml(mcr.mapToWriteToDisk, str);
-
-            writeTime = System.currentTimeMillis();
-
-            FileUtils.sync(str);
-
-            fsyncTime = System.currentTimeMillis();
-
-            str.close();
-            ContextImpl.setFilePermissionsFromMode(mFile.getPath(), mMode, 0);
-
-            try {
-                final StructStat stat = Os.stat(mFile.getPath());
-                synchronized (mLock) {
-                    mStatTimestamp = stat.st_mtim;
-                    mStatSize = stat.st_size;
-                }
-            } catch (ErrnoException e) {
-                // Do nothing
-            }
-
-
-            // Writing was successful, delete the backup file if there is one.
-            mBackupFile.delete();
-
-            mDiskStateGeneration = mcr.memoryStateGeneration;
-
-            mcr.setDiskWriteResult(true, true);
-
-            long fsyncDuration = fsyncTime - writeTime;
-            mSyncTimes.add((int) fsyncDuration);
-            mNumSync++;
-
-            return;
-        } catch (XmlPullParserException e) {
-            Log.w(TAG, "writeToFile: Got exception:", e);
-        } catch (IOException e) {
-            Log.w(TAG, "writeToFile: Got exception:", e);
+        } else {
+            mFile.delete();
         }
-
-        // Clean up an unsuccessfully written file
-        if (mFile.exists()) {
-            if (!mFile.delete()) {
-                Log.e(TAG, "Couldn't clean up partially-written file " + mFile);
-            }
-        }
-        mcr.setDiskWriteResult(false, false);
     }
+
+    // Attempt to write the file, delete the backup and return true as atomically as
+    // possible.  If any exception occurs, delete the new file; next time we will restore
+    // from the backup.
+    try {
+        FileOutputStream str = createFileOutputStream(mFile);
+
+        if (str == null) {
+            mcr.setDiskWriteResult(false, false);
+            return;
+        }
+        //写入数据
+        XmlUtils.writeMapXml(mcr.mapToWriteToDisk, str);
+
+        writeTime = System.currentTimeMillis();
+
+        FileUtils.sync(str);
+
+        fsyncTime = System.currentTimeMillis();
+
+        str.close();
+        ContextImpl.setFilePermissionsFromMode(mFile.getPath(), mMode, 0);
+
+        try {
+            final StructStat stat = Os.stat(mFile.getPath());
+            synchronized (mLock) {
+                mStatTimestamp = stat.st_mtim;
+                mStatSize = stat.st_size;
+            }
+        } catch (ErrnoException e) {
+            // Do nothing
+        }
+
+
+        // Writing was successful, delete the backup file if there is one.
+        mBackupFile.delete();
+
+        mDiskStateGeneration = mcr.memoryStateGeneration;
+
+        mcr.setDiskWriteResult(true, true);
+
+        long fsyncDuration = fsyncTime - writeTime;
+        mSyncTimes.add((int) fsyncDuration);
+        mNumSync++;
+
+        return;
+    } catch (XmlPullParserException e) {
+        Log.w(TAG, "writeToFile: Got exception:", e);
+    } catch (IOException e) {
+        Log.w(TAG, "writeToFile: Got exception:", e);
+    }
+
+    // Clean up an unsuccessfully written file
+    if (mFile.exists()) {
+        if (!mFile.delete()) {
+            Log.e(TAG, "Couldn't clean up partially-written file " + mFile);
+        }
+    }
+    mcr.setDiskWriteResult(false, false);
+}
 ```
-
-
 
 [QueuedWork](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java)
 
