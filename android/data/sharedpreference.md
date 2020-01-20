@@ -573,6 +573,8 @@ private void enqueueDiskWrite(final MemoryCommitResult mcr,
 
 ### SharedPreferencesImpl\#writeToFile\(\)
 
+writeToFile 是执行文件写入的方法，代码如下，我省略的一些日志输出代码：
+
 ```text
 @GuardedBy("mWritingToDiskLock")
 private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
@@ -593,15 +595,13 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
     if (fileExists) {
         boolean needsWrite = false;
 
-        // Only need to write if the disk state is older than this commit
+        // 只有文件版本小于内存版本时才写入
         if (mDiskStateGeneration < mcr.memoryStateGeneration) {
             if (isFromSyncCommit) {
                 needsWrite = true;
             } else {
                 synchronized (mLock) {
-                    // No need to persist intermediate states. Just wait for the latest state to
-                    // be persisted.
-                    //没有必要立刻写入，而是等待最新的提交
+                    //对于 apply，没有必要每次都写入，而是只执行最后一次的提交对应的写入
                     if (mCurrentMemoryStateGeneration == mcr.memoryStateGeneration) {
                         needsWrite = true;
                     }
@@ -610,6 +610,7 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
         }
 
         if (!needsWrite) {
+            //没必要写入文件，直接返回
             mcr.setDiskWriteResult(false, true);
             return;
         }
@@ -617,11 +618,13 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
         boolean backupFileExists = mBackupFile.exists();
 
         if (!backupFileExists) {
+            //备份文件不存在，将 正式文件命名为备份文件
             if (!mFile.renameTo(mBackupFile)) {
                 mcr.setDiskWriteResult(false, false);
                 return;
             }
         } else {
+            //备份文件存在，删除正式文件
             mFile.delete();
         }
     }
@@ -648,20 +651,10 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
         str.close();
         ContextImpl.setFilePermissionsFromMode(mFile.getPath(), mMode, 0);
 
-        try {
-            final StructStat stat = Os.stat(mFile.getPath());
-            synchronized (mLock) {
-                mStatTimestamp = stat.st_mtim;
-                mStatSize = stat.st_size;
-            }
-        } catch (ErrnoException e) {
-            // Do nothing
-        }
-
-
         // Writing was successful, delete the backup file if there is one.
         mBackupFile.delete();
 
+        //更新文件版本号
         mDiskStateGeneration = mcr.memoryStateGeneration;
 
         mcr.setDiskWriteResult(true, true);
@@ -686,6 +679,12 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
     mcr.setDiskWriteResult(false, false);
 }
 ```
+
+
+
+
+
+对于 apply 的优化，多次提交只有最后一次会执行写入。
 
 [QueuedWork](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java)
 
