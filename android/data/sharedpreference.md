@@ -272,37 +272,50 @@ private void awaitLoadedLocked() {
 }
 ```
 
-而上面 loadFromDisk 读取成功后会调用 mLock.notifyAll 方法，从而读取操作可以继续，也就是从map中根据key获取对应的值。
+而上面 loadFromDisk 读取成功后会调用 mLock.notifyAll 方法，从而读取操作可以继续，也就是从 map 中根据key获取对应的值。
 
 ## 写入值
 
+在写入时，需要先调用 edit 方法，获取一个 Editor 对象。
+
 ### 创建 Editor
 
-在写入时，需要先调用 edit 方法，获取一个 Editor 对象。
+edit 方法源码如下：
 
 ```text
 @Override
 public Editor edit() {
-    // TODO: remove the need to call awaitLoadedLocked() when
-    // requesting an editor.  will require some work on the
-    // Editor, but then we should be able to do:
-    //
-    //      context.getSharedPreferences(..).edit().putString(..).apply()
-    //
-    // ... all without blocking.
     synchronized (mLock) {
         awaitLoadedLocked();
     }
-
     return new EditorImpl();
 }
 ```
 
 当 sp 可用时，创建了一个 `EditorImpl` 对象并返回。`EditorImpl` 是`Editor`的实现类，同时是`SharedPreferencesImpl`的内部类。
 
+EditorImpl 只有三个属性：
+
+```text
+public final class EditorImpl implements Editor {
+    //写锁
+    private final Object mEditorLock = new Object();
+
+    @GuardedBy("mEditorLock")
+    private final Map<String, Object> mModified = new HashMap<>();
+
+    @GuardedBy("mEditorLock")
+    private boolean mClear = false;
+    
+    //....
+}
+```
+
 ### putXxx
 
-这里以 putString 方法为例：
+执行修改主要是一些重载的put方法，还有remove方法用于移除一个key，clear 方法用于清空修改。
+
+EditorImpl 中的对应的修改方法代码如下，put 方法以 putString\(\) 为例：
 
 ```text
 @Override
@@ -312,11 +325,29 @@ public Editor putString(String key, @Nullable String value) {
         return this;
     }
 }
+
+@Override
+public Editor remove(String key) {
+    synchronized (mEditorLock) {
+        mModified.put(key, this);
+        return this;
+    }
+}
+
+@Override
+public Editor clear() {
+    synchronized (mEditorLock) {
+        mClear = true;
+        return this;
+    }
+}
 ```
 
-只是把要放入的值先放入到 mModified 这个 HashMap 中,，接下来需要调用 apply 或者 commit 进行提交，先来看下 apply 的逻辑。
+put remove 操作的是 EditorImpl 的 mModified，而 clear 方法只是将清除标记置为 true。另外这些方法都返回 Editor 对象，方便链式调用。
 
-### apply
+要使这些更改生效，就需要调用 apply 或者 commit 进行提交，先来看下 apply 的逻辑。
+
+### EditorImpl\#apply\(\)
 
 apply 的代码如下，略去了一些 log 信息：
 
@@ -349,10 +380,7 @@ public void apply() {
 
     SharedPreferencesImpl.this.enqueueDiskWrite(mcr, postWriteRunnable);
 
-    // Okay to notify the listeners before it's hit disk
-    // because the listeners should always get the same
-    // SharedPreferences instance back, which has the
-    // changes reflected in memory.
+    // 写入内存后就可以通知监听者
     notifyListeners(mcr);
 }
 ```
@@ -362,30 +390,27 @@ apply 逻辑是：
 1. 通过 commitToMemory 方法把修改提交至内存中
 2. 通过 enqueueDiskWrite 执行磁盘写入
 
-#### commitToMemory
+#### EditorImpl\#commitToMemory\(\)
 
-这个方法用于将之前所有的 put 操作提交到内存的Sp中，并返回一个 MemoryCommitResult 对象提交信息，代码如下：
+这个方法用于将在 Editor 上执行所有的 put 更改提交到内存的Sp中，并返回一个 MemoryCommitResult 对象提交信息，代码如下：
 
 ```text
 private MemoryCommitResult commitToMemory() {
     // 当前内存中sp的版本号
     long memoryStateGeneration;
+    
     //所有修改的key
     List<String> keysModified = null;
+    
     Set<OnSharedPreferenceChangeListener> listeners = null;
+    
     //要写入磁盘的map
     Map<String, Object> mapToWriteToDisk;
 
     synchronized (SharedPreferencesImpl.this.mLock) {
-        // We optimistically don't make a deep copy until
-        // a memory commit comes in when we're already
-        // writing to disk.
         //当前有正在写入的任务在执行
         if (mDiskWritesInFlight > 0) {
-            // We can't modify our mMap as a currently
-            // in-flight write owns it.  Clone it before
-            // modifying it.
-            // noinspection unchecked
+            // 此时有写入任务正在执行，所以不能直接修改 mMap，而是克隆它
             mMap = new HashMap<String, Object>(mMap);
         }
         //mapToWriteToDisk 为所有key value 对
@@ -394,6 +419,7 @@ private MemoryCommitResult commitToMemory() {
 
         boolean hasListeners = mListeners.size() > 0;
         if (hasListeners) {
+            //如果有监听者，则需要记录发生更改的 key
             keysModified = new ArrayList<String>();
             listeners = new HashSet<OnSharedPreferenceChangeListener>(mListeners.keySet());
         }
@@ -402,6 +428,7 @@ private MemoryCommitResult commitToMemory() {
             boolean changesMade = false;
 
             if (mClear) {
+                //如果调用过 clear 先执行清空操作
                 if (!mapToWriteToDisk.isEmpty()) {
                     changesMade = true;
                     mapToWriteToDisk.clear();
@@ -412,9 +439,8 @@ private MemoryCommitResult commitToMemory() {
             for (Map.Entry<String, Object> e : mModified.entrySet()) {
                 String k = e.getKey();
                 Object v = e.getValue();
-                // "this" is the magic value for a removal mutation. In addition,
-                // setting a value to "null" for a given key is specified to be
-                // equivalent to calling remove on that key.
+                //在 remove 方法中，移除一个key时，将它的值设为 EditorImpl.this
+                // 所以如果 v==this,就代表移除一个key
                 if (v == this || v == null) {
                     if (!mapToWriteToDisk.containsKey(k)) {
                         continue;
