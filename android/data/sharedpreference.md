@@ -49,8 +49,6 @@ public File getSharedPreferencesPath(String name) {
 
 获取sp目录，也就是 data 下的 "shared\_prefs"目录下。
 
-
-
 ```text
 private File getPreferencesDir() {
     synchronized (mSync) {
