@@ -2,7 +2,7 @@
 
 ## getSharedPreferences
 
-通过 Context 的 getSharedPreferences 方法获取 Sp 实例，其具体的实现在 ContextImpl 中，方法代码如下：
+通过 Context 的 getSharedPreferences 方法获取 Sp 实例，其具体的实现在 ContextImpl 类中，方法代码如下：
 
 ```text
 @Override
@@ -60,6 +60,46 @@ private File getPreferencesDir() {
         }
         return ensurePrivateDirExists(mPreferencesDir);
     }
+}
+```
+
+ensurePrivateDirExists 方法主要目的是在目录不存在时进行创建，源码如下，细节就不再分析了。
+
+```text
+private static File ensurePrivateDirExists(File file) {
+    return ensurePrivateDirExists(file, 0771, -1, null);
+}
+
+
+private static File ensurePrivateDirExists(File file, int mode, int gid, String xattr) {
+    if (!file.exists()) {
+        final String path = file.getAbsolutePath();
+        try {
+            Os.mkdir(path, mode);
+            Os.chmod(path, mode);
+            if (gid != -1) {
+                Os.chown(path, -1, gid);
+            }
+        } catch (ErrnoException e) {
+            if (e.errno == OsConstants.EEXIST) {
+                // We must have raced with someone; that's okay
+            } else {
+                Log.w(TAG, "Failed to ensure " + file + ": " + e.getMessage());
+            }
+        }
+
+        if (xattr != null) {
+            try {
+                final StructStat stat = Os.stat(file.getAbsolutePath());
+                final byte[] value = new byte[8];
+                Memory.pokeLong(value, 0, stat.st_ino, ByteOrder.nativeOrder());
+                Os.setxattr(file.getParentFile().getAbsolutePath(), xattr, value, 0);
+            } catch (ErrnoException e) {
+                Log.w(TAG, "Failed to update " + xattr + ": " + e.getMessage());
+            }
+        }
+    }
+    return file;
 }
 ```
 
@@ -186,10 +226,8 @@ private void loadFromDisk() {
     }
 
     Map<String, Object> map = null;
-    StructStat stat = null;
     Throwable thrown = null;
     try {
-        stat = Os.stat(mFile.getPath());
         if (mFile.canRead()) {
             BufferedInputStream str = null;
             try {
@@ -222,9 +260,8 @@ private void loadFromDisk() {
         try {
             if (thrown == null) {
                 if (map != null) {
+                    //将 mMap 赋值
                     mMap = map;
-                    mStatTimestamp = stat.st_mtim;
-                    mStatSize = stat.st_size;
                 } else {
                     mMap = new HashMap<>();
                 }
@@ -845,6 +882,14 @@ public boolean commit() {
 
 
 QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行。见 ActivityThread
+
+## QueuedWork 
+
+
+
+
+
+
 
 [SharedPreferences灵魂拷问之原理](https://juejin.im/post/5df7af66e51d4557f17fb4f7)
 
