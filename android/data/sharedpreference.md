@@ -2,7 +2,7 @@
 
 ## getSharedPreferences
 
-通过 Context 的 getSharedPreferences 方法获取 Sp 实例，其实现在 ContextImpl 中，方法代码如下：
+通过 Context 的 getSharedPreferences 方法获取 Sp 实例，其具体的实现在 ContextImpl 中，方法代码如下：
 
 ```text
 @Override
@@ -38,7 +38,7 @@ public SharedPreferences getSharedPreferences(String name, int mode) {
 }
 ```
 
-生成 file 时调用了 `getSharedPreferencesPath`
+逻辑就是根据名称找到或者生成对应的文件，生成文件时调用了 `getSharedPreferencesPath`，该方法代码如下：
 
 ```text
 @Override
@@ -47,7 +47,9 @@ public File getSharedPreferencesPath(String name) {
 }
 ```
 
-获取sp目录，也就是 data 下的 "shared\_prefs"目录下。
+调用了makeFileName方法，第一个参数是文件目录，通过getPreferencesDir方法获取，。第二个是文件名，通过这里可以看出存储sp使用的xml文件。
+
+getPreferencesDir 代码如下，其实就是获取 data 下的 "shared\_prefs"目录：
 
 ```text
 private File getPreferencesDir() {
@@ -61,7 +63,7 @@ private File getPreferencesDir() {
 }
 ```
 
-makeFilename 方法如下：
+makeFilename 方法实现如下：
 
 ```text
 private File makeFilename(File base, String name) {
@@ -74,6 +76,8 @@ private File makeFilename(File base, String name) {
             "File " + name + " contains a path separator");
 }
 ```
+
+可以看出主要逻辑就是生成 File 对象。
 
 以上是生成 file 对象的过程。
 
