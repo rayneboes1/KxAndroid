@@ -83,7 +83,7 @@ private File makeFilename(File base, String name) {
 
 ## 创建 SharedPreferences
 
-创建 Sp 实例时调用了getSharedPreferences\(file, mode\):
+有了文件后，就可以创建 Sp 实例了，这个过程通过 getSharedPreferences\(file, mode\)方法完成，该方法源码如下:
 
 ```text
 @Override
@@ -122,6 +122,8 @@ public SharedPreferences getSharedPreferences(File file, int mode) {
 }
 ```
 
+方法会先存缓存中获取，如果缓存没有，那么会执行创建，并把新创建的sp实例放入缓存。
+
 创建前先进行了一些权限检查，checkMode 用于检查 sp 的模式，MODE\_WORLD\_READABLE 和 MODE\_WORLD\_WRITEABLE 在7.0及以后会抛出异常。
 
 ```text
@@ -137,7 +139,7 @@ private void checkMode(int mode) {
 }
 ```
 
-创建 sp SharePreferences 的实现类是`SharedPreferencesImpl`构造方法的源码如下：
+创建 sp 时直接实例化了`SharedPreferencesImpl，`它是 SharePreferences 的实现类，构造方法的源码如下：
 
 ```text
 SharedPreferencesImpl(File file, int mode) {
@@ -152,7 +154,7 @@ SharedPreferencesImpl(File file, int mode) {
 }
 ```
 
-在构造方法中，调用了 startLoadFromDisk 方法，在该方法中，先将读取状态标识置为false，然后开启了一个线程进行读取任务：
+在构造方法中，调用了 startLoadFromDisk 方法，从名字可以看出来，这个方法的任务主要是从文件中读取内容，其源码如下：
 
 ```text
 private void startLoadFromDisk() {
@@ -168,7 +170,7 @@ private void startLoadFromDisk() {
 }
 ```
 
-读取任务在 loadFromDisk 方法中，代码为：
+在该方法中，先将读取状态标识置为false，然后开启了一个线程执行文件读取任务，文件读取任务由 loadFromDisk 方法定义，代码为：
 
 ```text
 private void loadFromDisk() {
