@@ -47,7 +47,7 @@ public File getSharedPreferencesPath(String name) {
 }
 ```
 
-调用了makeFileName方法，第一个参数是文件目录，通过getPreferencesDir方法获取，。第二个是文件名，通过这里可以看出存储sp使用的xml文件。
+调用了makeFileName方法，第一个参数是文件目录，通过getPreferencesDir方法获取；第二个是文件名，通过这里可以看出存储sp使用的xml文件。
 
 getPreferencesDir 代码如下，其实就是获取 data 下的 "shared\_prefs"目录：
 
