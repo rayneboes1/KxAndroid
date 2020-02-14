@@ -495,7 +495,7 @@ private MemoryCommitResult commitToMemory() {
                             continue;
                         }
                     }
-                    //将新增加的key和value放到即将写入的map中
+                    //将新增加或者放生变更的key和value放到即将写入的map中
                     mapToWriteToDisk.put(k, v);
                 }
 
@@ -554,6 +554,7 @@ private static class MemoryCommitResult {
     void setDiskWriteResult(boolean wasWritten, boolean result) {
         this.wasWritten = wasWritten;
         writeToDiskResult = result;
+        //countDown
         writtenToDiskLatch.countDown();
     }
 }
@@ -592,7 +593,7 @@ private void enqueueDiskWrite(final MemoryCommitResult mcr,
         boolean wasEmpty = false;
         synchronized (mLock) {
             // mDiskWritesInFlight 在提交至内存时会自增
-            // 为 1 说明此是没有其他的任务要写入
+            // 为 1 说明此时没有其他的任务要写入
             wasEmpty = mDiskWritesInFlight == 1;
         }
         if (wasEmpty) {
@@ -725,7 +726,7 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
 
 
 
-对于 apply 的优化，多次提交只有最后一次会执行写入。
+对于 apply 的优化，短时间内多次提交只有最后一次会执行文件写入（将每次mcr版本与当前内存版本号进行对比）。
 
 [QueuedWork](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java)
 
