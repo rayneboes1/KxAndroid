@@ -1,8 +1,16 @@
 # SharedPreference
 
+{% hint style="info" %}
+公众号已发表文章：
+
+[SharedPreferences 源码解析\(上） ](https://mp.weixin.qq.com/s/RNWcE9TZl2cfEcGjS-GQAw)
+{% endhint %}
+
 ## getSharedPreferences
 
 通过 Context 的 getSharedPreferences 方法获取 Sp 实例，其具体的实现在 ContextImpl 类中，方法代码如下：
+
+
 
 ```text
 @Override
@@ -896,5 +904,9 @@ QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行
 
 
 
-commit 和 apply 区别
+commit 和 apply 区别（为什么推荐用apply）？
+
+commit 有可能会在主线程写入文件，并且没有针对短时间内频繁更新做优化，有可能导致每次操作都在主线程写入。
+
+apply 如果短时间内\(100ms\)有多次提交，只有最后一次会执行文件写入。并且是在单独的线程里执行写入，不会影响性能。
 
