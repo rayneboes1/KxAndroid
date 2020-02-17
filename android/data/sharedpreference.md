@@ -225,6 +225,7 @@ private void loadFromDisk() {
         if (mLoaded) {
             return;
         }
+        //如果有备份文件，优先从备份文件恢复
         if (mBackupFile.exists()) {
             mFile.delete();
             mBackupFile.renameTo(mFile);
@@ -687,8 +688,9 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
         boolean backupFileExists = mBackupFile.exists();
 
         if (!backupFileExists) {
-            //备份文件不存在，将正式文件命名为备份文件
+            //备份文件不存在，将正式文件重命名为备份文件
             if (!mFile.renameTo(mBackupFile)) {
+                //如果失败，停止写入
                 mcr.setDiskWriteResult(false, false);
                 return;
             }
@@ -702,6 +704,7 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
     // possible.  If any exception occurs, delete the new file; next time we will restore
     // from the backup.
     try {
+        //创建文件输出流（会自动创建文件）
         FileOutputStream str = createFileOutputStream(mFile);
 
         if (str == null) {
@@ -739,7 +742,7 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
         Log.w(TAG, "writeToFile: Got exception:", e);
     }
 
-    // Clean up an unsuccessfully written file
+    // 发生异常，清理未成功写入的文件
     if (mFile.exists()) {
         if (!mFile.delete()) {
             Log.e(TAG, "Couldn't clean up partially-written file " + mFile);
@@ -751,27 +754,29 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
 
 
 
+对于 apply ，将每次mcr版本号与当前内存版本号进行对比，只有相等时才会执行文件写入，如果短时间内有多次写入，只有最后一次写入会被真正执行。避免冗余写入。
 
-
-对于 apply 的优化，短时间内多次提交只有最后一次会执行文件写入（将每次mcr版本与当前内存版本号进行对比）。
-
-
-
-关于 mFile 和 mBackupFile （要整 明白）:
-
-在loadFromDisk 方法中：
+在执行写入前，先创建一个备份文件，当写入过程中发生意外，下次读取时可以从备份文件中恢复。在loadFromDisk 方法中：
 
 ```text
 synchronized (mLock) {
     if (mLoaded) {
         return;
     }
+    //如果备份文件存在，则优先从备份文件中恢复
     if (mBackupFile.exists()) {
         mFile.delete();
         mBackupFile.renameTo(mFile);
     }
 }
 ```
+
+写入过程:
+
+1. 创建文件输出流
+2. 将 map 写入到xml 文件
+3. 删除备份文件 
+4. 更新磁盘Sp对应版本号 mDiskStateGeneration
 
 [QueuedWork](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java)
 
@@ -890,6 +895,8 @@ public static void queue(Runnable work, boolean shouldDelay) {
 ```
 
 [XMLUtils](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/com/android/internal/util/XmlUtils.java;l=50)
+
+
 
 FileUtils
 
