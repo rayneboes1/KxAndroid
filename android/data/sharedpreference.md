@@ -10,8 +10,6 @@
 
 通过 Context 的 getSharedPreferences 方法获取 Sp 实例，其具体的实现在 ContextImpl 类中，方法代码如下：
 
-
-
 ```text
 @Override
 public SharedPreferences getSharedPreferences(String name, int mode) {
