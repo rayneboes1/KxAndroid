@@ -319,7 +319,9 @@ private void awaitLoadedLocked() {
 }
 ```
 
-而上面 loadFromDisk 读取成功后会调用 mLock.notifyAll 方法，从而读取操作可以继续，也就是从 map 中根据key获取对应的值。
+而上面 loadFromDisk 方法在读取成功后会调用 mLock.notifyAll 方法，从而读取操作可以继续。
+
+值的读取就是从 map 中根据 key 获取对应的值。
 
 ## 写入值
 
@@ -339,7 +341,7 @@ public Editor edit() {
 }
 ```
 
-当 sp 可用时，创建了一个 `EditorImpl` 对象并返回。`EditorImpl` 是`Editor`的实现类，同时是`SharedPreferencesImpl`的内部类。
+当 Sp 可用时，创建了一个 `EditorImpl` 对象并返回。`EditorImpl` 是`Editor`的实现类，同时是`SharedPreferencesImpl`的内部类。
 
 EditorImpl 只有三个属性：
 
@@ -347,7 +349,7 @@ EditorImpl 只有三个属性：
 public final class EditorImpl implements Editor {
     //写锁
     private final Object mEditorLock = new Object();
-
+    //新增或者发生变更的键值对
     @GuardedBy("mEditorLock")
     private final Map<String, Object> mModified = new HashMap<>();
 
@@ -362,7 +364,7 @@ public final class EditorImpl implements Editor {
 
 执行修改主要是一些重载的put方法，还有remove方法用于移除一个key，clear 方法用于清空修改。
 
-EditorImpl 中的对应的修改方法代码如下，put 方法以 putString\(\) 为例：
+EditorImpl 中的对应的修改方法代码如下：\(put 方法以 putString 为例\)：
 
 ```text
 @Override
@@ -390,13 +392,17 @@ public Editor clear() {
 }
 ```
 
-put remove 操作的是 EditorImpl 的 mModified，而 clear 方法只是将清除标记置为 true。另外这些方法都返回 Editor 对象，方便链式调用。
+put 和 remove 操作的是 EditorImpl 的 mModified，而 clear 方法只是将清除标记置为 true。
 
-要使这些更改生效，就需要调用 apply 或者 commit 进行提交，先来看下 apply。
+另外这些方法都返回 Editor 对象，方便链式调用。
+
+通过对 EditorImpl 操作后，所有要新增或发生修改的键值对都被记录在了 mModified 这个 map 中，而要使这些更改生效，就需要调用 apply 或者 commit 进行提交。
+
+我们先来看下 apply 方法。
 
 ### EditorImpl\#apply\(\)
 
-apply 的代码如下，略去了一些 log 信息：
+apply 方法源码如下，略去了一些 log 信息：
 
 ```text
 @Override
@@ -435,18 +441,19 @@ public void apply() {
 apply 逻辑是：
 
 1. 通过 commitToMemory 方法把修改提交至内存中
-2. 通过 enqueueDiskWrite 执行磁盘写入
+2. 通过 enqueueDiskWrite 将磁盘写入任务提交至任务队列
+3. 通知监听者
 
 #### EditorImpl\#commitToMemory\(\)
 
-这个方法用于将在 Editor 上执行所有的 put 更改提交到内存的Sp中，并返回一个 MemoryCommitResult 对象提交信息，代码如下：
+这个方法用于将在 Editor 上执行所有更改提交到内存的Sp中，并返回一个 MemoryCommitResult 对象提交信息，代码如下：
 
 ```text
 private MemoryCommitResult commitToMemory() {
     // 当前内存中sp的版本号
     long memoryStateGeneration;
     
-    //所有修改的key，用于通知监听者
+    //所有发生修改的key，用于通知监听者
     List<String> keysModified = null;
     
     Set<OnSharedPreferenceChangeListener> listeners = null;
@@ -460,8 +467,9 @@ private MemoryCommitResult commitToMemory() {
             // 此时有写入任务正在执行，所以不能直接修改 mMap，而是克隆它
             mMap = new HashMap<String, Object>(mMap);
         }
-        //mapToWriteToDisk 为所有key value 对
+        //mapToWriteToDisk 为所有键值对
         mapToWriteToDisk = mMap;
+        //写入任务+1
         mDiskWritesInFlight++;
 
         boolean hasListeners = mListeners.size() > 0;
@@ -482,12 +490,12 @@ private MemoryCommitResult commitToMemory() {
                 }
                 mClear = false;
             }
-
+            //遍历通过 Editor 做出修改的键值对
             for (Map.Entry<String, Object> e : mModified.entrySet()) {
                 String k = e.getKey();
                 Object v = e.getValue();
                 //在 remove 方法中，移除一个key时，将它的值设为 EditorImpl.this
-                // 所以如果 v==this,就代表移除一个key
+                //所以如果 v==this,就代表移除一个key
                 if (v == this || v == null) {
                     if (!mapToWriteToDisk.containsKey(k)) {
                         continue;
@@ -507,6 +515,7 @@ private MemoryCommitResult commitToMemory() {
 
                 changesMade = true;
                 if (hasListeners) {
+                    //记录真正发生变更的key
                     keysModified.add(k);
                 }
             }
@@ -514,20 +523,27 @@ private MemoryCommitResult commitToMemory() {
             mModified.clear();
 
             if (changesMade) {
-                //版本自增
+                //将内存中的 Sp 版本号自增
                 mCurrentMemoryStateGeneration++;
             }
+            //记录当前内存中的版本
             memoryStateGeneration = mCurrentMemoryStateGeneration;
         }
     }
+    //创建 MemoryCommitResult 对象
     return new MemoryCommitResult(memoryStateGeneration, keysModified, listeners,
                     mapToWriteToDisk);
 }
 ```
 
-该方法的逻辑比较容易理解，根据 Editor 的 mModified 中修改的key，来更新内存中 map 的对应的key，并记录发生修改的key，以便通知监听者。
+该方法的主要逻辑是，根据 Editor 的 mModified 中记录的发生修改的key，来更新内存中 map 的对应的 key。如果Sp有监听者，还需要记录发生修改的key，以便通知监听者。最后返回一个`MemoryCommitResult` 对象，它记录了当前内存中Sp版本号、发生变更的key、监听者和最要写入文件的map（即内存中Sp的所有键值对）。
 
-方法返回的是一个 `MemoryCommitResult` 对象，`MemoryCommitResult` 是 SharedPreferencesImpl 的静态内部类：
+需要注意的点：
+
+1. 对于 Editor\#clear\(\) 方法，如果执行过，会先将所有键值对清空，然后写入 mModified 中记录的键值对
+2. 内存中的Sp 有一个版本号标识，每次提交新的改动到内存后，该版本号会加1
+
+该方法返回的是一个 `MemoryCommitResult` 对象，`MemoryCommitResult` 是 SharedPreferencesImpl 的静态内部类，它的定义如下：
 
 ```text
 // Return value from EditorImpl#commitToMemory()
@@ -536,7 +552,7 @@ private static class MemoryCommitResult {
     final long memoryStateGeneration;
     //发生修改的key集合
     @Nullable final List<String> keysModified;
-    
+    //sp 的监听者
     @Nullable final Set<OnSharedPreferenceChangeListener> listeners;
     //要写入文件的map
     final Map<String, Object> mapToWriteToDisk;
@@ -566,9 +582,11 @@ private static class MemoryCommitResult {
 }
 ```
 
-将变更提交的内存后，调用了 enqueDiskWrite 进行文件写入。
+其中 setDiskWriteResult 方法用来设置文件写入结果，后面会讲到。
 
 #### SharedPreferencesImpl\#enqueDiskWrite
+
+将变更提交的内存后，调用了 enqueDiskWrite 进行文件写入，这个方法源码如下：
 
 ```text
 private void enqueueDiskWrite(final MemoryCommitResult mcr,
@@ -584,6 +602,7 @@ private void enqueueDiskWrite(final MemoryCommitResult mcr,
                     writeToFile(mcr, isFromSyncCommit);
                 }
                 synchronized (mLock) {
+                    //文件写入任务数减一
                     mDiskWritesInFlight--;
                 }
                 if (postWriteRunnable != null) {
@@ -598,12 +617,12 @@ private void enqueueDiskWrite(final MemoryCommitResult mcr,
     if (isFromSyncCommit) {
         boolean wasEmpty = false;
         synchronized (mLock) {
-            // mDiskWritesInFlight 在提交至内存时会自增
-            // 为 1 说明此时没有其他的任务要写入
+            // mDiskWritesInFlight 在提交至内存时会自增，
+            // 如果是 1 说明此时没有其他的任务要写入
             wasEmpty = mDiskWritesInFlight == 1;
         }
         if (wasEmpty) {
-            //在主线程中直接执行写入
+            //在当前线程中直接执行写入
             writeToDiskRunnable.run();
             return;
         }
@@ -613,11 +632,13 @@ private void enqueueDiskWrite(final MemoryCommitResult mcr,
 }
 ```
 
-方法中第二个参数是一个 Runnable ，用于在文件写入后执行。如果这个参数为null，那么此次调用来自 commit\(\) 方法，否则此次调用就来自 apply 方法，在上面的 apply 方法中，我们也看到它传了一个 Runnable。
+方法中第二个参数是一个 Runnable ，用于在文件写入后执行。如果这个参数为null，那么就说明此次调用来自 commit\(\) 方法，否则此次调用就来自 apply \(\)方法。在上面的 apply 方法中，我们也看到它传了一个 Runnable。
 
-上面方法中的 writeToDiskRunnable 定义了文件写入的过程：先调用 writeToFile 将内存的SP写入文件，然后将 mDiskWritesInFlight 减一，最后在执行 postWriteRunnable。
+上面方法中的 writeToDiskRunnable 定义了文件写入的过程：先调用 writeToFile 将内存的Sp写入文件，然后将 mDiskWritesInFlight 减一，最后在执行 postWriteRunnable。
 
-不过 writeToDiskRunnable  的执行时机却暗藏玄机，如果此调用来自 commit\(\) 方法，并且当前只有这次写入需要执行，那么就会在主线程执行这次文件写入；其他情况都会通过 QueuedWork 把写入任务加入队列中，稍后再写入。关于 QueuedWork 稍后再介绍，先来看看 writeToFile 方法。
+不过 writeToDiskRunnable  的执行时机却暗藏玄机。如果此调用来自 commit\(\) 方法，并且当前只有这次写入需要执行，那么就会在当前线程执行这次文件写入\(如果我们的调用来自主线程，就会直接在主线程中执行文件写入，这就可能导致性能问题\)；其他情况都会通过 QueuedWork 把写入任务加入队列中，稍后再写入。
+
+关于 QueuedWork 稍后再介绍，先来看看 writeToFile 方法。
 
 ### SharedPreferencesImpl\#writeToFile\(\)
 
@@ -649,7 +670,7 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
                 needsWrite = true;
             } else {
                 synchronized (mLock) {
-                    //对于 apply，没有必要每次都写入，而是只执行最后一次的提交对应的写入
+                    //对于 apply，没有必要每次都写入，而是只执行最新一次的提交对应的写入
                     if (mCurrentMemoryStateGeneration == mcr.memoryStateGeneration) {
                         needsWrite = true;
                     }
@@ -666,7 +687,7 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
         boolean backupFileExists = mBackupFile.exists();
 
         if (!backupFileExists) {
-            //备份文件不存在，将 正式文件命名为备份文件
+            //备份文件不存在，将正式文件命名为备份文件
             if (!mFile.renameTo(mBackupFile)) {
                 mcr.setDiskWriteResult(false, false);
                 return;
@@ -675,7 +696,7 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
             //备份文件存在，删除正式文件
             mFile.delete();
         }
-    }
+    }//end if(fileExists)..
 
     // Attempt to write the file, delete the backup and return true as atomically as
     // possible.  If any exception occurs, delete the new file; next time we will restore
@@ -733,6 +754,24 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
 
 
 对于 apply 的优化，短时间内多次提交只有最后一次会执行文件写入（将每次mcr版本与当前内存版本号进行对比）。
+
+
+
+关于 mFile 和 mBackupFile :
+
+在loadFromDisk 方法中：
+
+```text
+synchronized (mLock) {
+    if (mLoaded) {
+        return;
+    }
+    if (mBackupFile.exists()) {
+        mFile.delete();
+        mBackupFile.renameTo(mFile);
+    }
+}
+```
 
 [QueuedWork](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java)
 
