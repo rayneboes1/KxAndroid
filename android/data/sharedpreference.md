@@ -816,10 +816,6 @@ QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行
 
 ## QueuedWork 
 
-
-
-[QueuedWork](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java)
-
 ```text
 
 private static final LinkedList<Runnable> sFinishers = new LinkedList<>();
@@ -867,7 +863,6 @@ public static void addFinisher(Runnable finisher) {
 }
     
     
-    
 private static class QueuedWorkHandler extends Handler {
     static final int MSG_RUN = 1;
 
@@ -883,25 +878,25 @@ private static class QueuedWorkHandler extends Handler {
 }
     
     
-    private static void processPendingWork() {
-        synchronized (sProcessingWork) {
-            LinkedList<Runnable> work;
+private static void processPendingWork() {
+    synchronized (sProcessingWork) {
+        LinkedList<Runnable> work;
 
-            synchronized (sLock) {
-                work = (LinkedList<Runnable>) sWork.clone();
-                sWork.clear();
+        synchronized (sLock) {
+            work = (LinkedList<Runnable>) sWork.clone();
+            sWork.clear();
 
-                // Remove all msg-s as all work will be processed now
-                getHandler().removeMessages(QueuedWorkHandler.MSG_RUN);
-            }
+            // Remove all msg-s as all work will be processed now
+            getHandler().removeMessages(QueuedWorkHandler.MSG_RUN);
+        }
 
-            if (work.size() > 0) {
-                for (Runnable w : work) {
-                    w.run();
-                }
+        if (work.size() > 0) {
+            for (Runnable w : work) {
+                w.run();
             }
         }
     }
+}
     
     
             
@@ -913,9 +908,9 @@ private static class QueuedWorkHandler extends Handler {
      * Is called from the Activity base class's onPause(), after BroadcastReceiver's onReceive,
      * after Service command handling, etc. (so async work is never lost)
      */
-    public static void waitToFinish() {
-        long startTime = System.currentTimeMillis();
-        boolean hadMessages = false;
+public static void waitToFinish() {
+    long startTime = System.currentTimeMillis();
+    boolean hadMessages = false;
 
         Handler handler = getHandler();
 
