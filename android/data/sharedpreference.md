@@ -752,11 +752,9 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
 }
 ```
 
+对于 apply ，会将每次mcr的版本号与当前内存版本号进行对比，只有相等时才会执行文件写入。这样如果短时间内有多次文件写入请求，只有最后一次写入会被真正执行，避免冗余写入。
 
-
-对于 apply ，将每次mcr版本号与当前内存版本号进行对比，只有相等时才会执行文件写入，如果短时间内有多次写入，只有最后一次写入会被真正执行。避免冗余写入。
-
-在执行写入前，先创建一个备份文件，当写入过程中发生意外，下次读取时可以从备份文件中恢复。在loadFromDisk 方法中：
+在执行写入前，会先创建一个备份文件，当写入过程中发生意外，下次读取时可以从备份文件中恢复。在loadFromDisk 方法中就有如下代码：
 
 ```text
 synchronized (mLock) {
@@ -771,12 +769,54 @@ synchronized (mLock) {
 }
 ```
 
-写入过程:
+文件写入过程主要分以下几步:
 
 1. 创建文件输出流
 2. 将 map 写入到xml 文件
 3. 删除备份文件 
 4. 更新磁盘Sp对应版本号 mDiskStateGeneration
+
+针对文件写入情况，会调用 MemoryCommitResult\#setDiskWriteResult 方法设置结果，这个方法源码：
+
+```text
+//lock
+final CountDownLatch writtenToDiskLatch = new CountDownLatch(1);
+
+void setDiskWriteResult(boolean wasWritten, boolean result) {
+    this.wasWritten = wasWritten;
+    writeToDiskResult = result;
+    //countDown
+    writtenToDiskLatch.countDown();
+}
+```
+
+调用了 writtenToDiskLatch.countDown\(\) 以通知正在等待的线程。    
+
+## commit
+
+```text
+public boolean commit() {
+    MemoryCommitResult mcr = commitToMemory();
+
+    SharedPreferencesImpl.this.enqueueDiskWrite(
+                mcr, null);
+    try {
+        mcr.writtenToDiskLatch.await();
+    } catch (InterruptedException e) {
+        return false;
+    } finally {
+                
+    }
+    notifyListeners(mcr);
+    return mcr.writeToDiskResult;
+}
+```
+
+QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行。见 ActivityThread。
+
+## QueuedWork 
+
+
 
 [QueuedWork](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java)
 
@@ -785,33 +825,29 @@ synchronized (mLock) {
 private static final LinkedList<Runnable> sFinishers = new LinkedList<>();
 private static final LinkedList<Runnable> sWork = new LinkedList<>();
 private static boolean sCanDelay = true;
+private static final long DELAY = 100;
 
-/**
-     * Queue a work-runnable for processing asynchronously.
-     *
-     * @param work The new runnable to process
-     * @param shouldDelay If the message should be delayed
-     */
-    @UnsupportedAppUsage
-    public static void queue(Runnable work, boolean shouldDelay) {
-        Handler handler = getHandler();
+@UnsupportedAppUsage
+public static void queue(Runnable work, boolean shouldDelay) {
+    Handler handler = getHandler();
 
-        synchronized (sLock) {
-            sWork.add(work);
+    synchronized (sLock) {
+        sWork.add(work);
 
-            if (shouldDelay && sCanDelay) {
-                handler.sendEmptyMessageDelayed(QueuedWorkHandler.MSG_RUN, DELAY);
-            } else {
-                handler.sendEmptyMessage(QueuedWorkHandler.MSG_RUN);
-            }
+        if (shouldDelay && sCanDelay) {
+            handler.sendEmptyMessageDelayed(QueuedWorkHandler.MSG_RUN, DELAY);
+        } else {
+            handler.sendEmptyMessage(QueuedWorkHandler.MSG_RUN);
         }
     }
+}
     
     
 //创建新的 HanlderThread
 private static Handler getHandler() {
         synchronized (sLock) {
             if (sHandler == null) {
+                //创建新的线程
                 HandlerThread handlerThread = new HandlerThread("queued-work-looper",
                         Process.THREAD_PRIORITY_FOREGROUND);
                 handlerThread.start();
@@ -821,54 +857,33 @@ private static Handler getHandler() {
             return sHandler;
         }
     }
+ 
     
-public static void queue(Runnable work, boolean shouldDelay) {
-        Handler handler = getHandler();
+    
+public static void addFinisher(Runnable finisher) {
+    synchronized (sLock) {
+        sFinishers.add(finisher);
+    }
+}
+    
+    
+    
+private static class QueuedWorkHandler extends Handler {
+    static final int MSG_RUN = 1;
 
-        synchronized (sLock) {
-            sWork.add(work);
+    QueuedWorkHandler(Looper looper) {
+        super(looper);
+    }
 
-            if (shouldDelay && sCanDelay) {
-                handler.sendEmptyMessageDelayed(QueuedWorkHandler.MSG_RUN, DELAY);
-            } else {
-                handler.sendEmptyMessage(QueuedWorkHandler.MSG_RUN);
-            }
+    public void handleMessage(Message msg) {
+        if (msg.what == MSG_RUN) {
+            processPendingWork();
         }
     }
-    
-    
-    
-@UnsupportedAppUsage
-    public static void addFinisher(Runnable finisher) {
-        synchronized (sLock) {
-            sFinishers.add(finisher);
-        }
-    }
-    
-    
-    
-    private static class QueuedWorkHandler extends Handler {
-        static final int MSG_RUN = 1;
-
-        QueuedWorkHandler(Looper looper) {
-            super(looper);
-        }
-
-        public void handleMessage(Message msg) {
-            if (msg.what == MSG_RUN) {
-                processPendingWork();
-            }
-        }
-    }
+}
     
     
     private static void processPendingWork() {
-        long startTime = 0;
-
-        if (DEBUG) {
-            startTime = System.currentTimeMillis();
-        }
-
         synchronized (sProcessingWork) {
             LinkedList<Runnable> work;
 
@@ -884,71 +899,89 @@ public static void queue(Runnable work, boolean shouldDelay) {
                 for (Runnable w : work) {
                     w.run();
                 }
+            }
+        }
+    }
+    
+    
+            
+/**
+     * Trigger queued work to be processed immediately. The queued work is processed on a separate
+     * thread asynchronous. While doing that run and process all finishers on this thread. The
+     * finishers can be implemented in a way to check weather the queued work is finished.
+     *
+     * Is called from the Activity base class's onPause(), after BroadcastReceiver's onReceive,
+     * after Service command handling, etc. (so async work is never lost)
+     */
+    public static void waitToFinish() {
+        long startTime = System.currentTimeMillis();
+        boolean hadMessages = false;
+
+        Handler handler = getHandler();
+
+        synchronized (sLock) {
+            if (handler.hasMessages(QueuedWorkHandler.MSG_RUN)) {
+                // Delayed work will be processed at processPendingWork() below
+                handler.removeMessages(QueuedWorkHandler.MSG_RUN);
 
                 if (DEBUG) {
-                    Log.d(LOG_TAG, "processing " + work.size() + " items took " +
-                            +(System.currentTimeMillis() - startTime) + " ms");
+                    hadMessages = true;
+                    Log.d(LOG_TAG, "waiting");
+                }
+            }
+
+            // We should not delay any work as this might delay the finishers
+            sCanDelay = false;
+        }
+
+        StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskWrites();
+        try {
+            processPendingWork();
+        } finally {
+            StrictMode.setThreadPolicy(oldPolicy);
+        }
+
+        try {
+            while (true) {
+                Runnable finisher;
+
+                synchronized (sLock) {
+                    finisher = sFinishers.poll();
+                }
+
+                if (finisher == null) {
+                    break;
+                }
+
+                finisher.run();
+            }
+        } finally {
+            sCanDelay = true;
+        }
+
+        synchronized (sLock) {
+            long waitTime = System.currentTimeMillis() - startTime;
+
+            if (waitTime > 0 || hadMessages) {
+                mWaitTimes.add(Long.valueOf(waitTime).intValue());
+                mNumWaits++;
+
+                if (DEBUG || mNumWaits % 1024 == 0 || waitTime > MAX_WAIT_TIME_MILLIS) {
+                    mWaitTimes.log(LOG_TAG, "waited: ");
                 }
             }
         }
     }
+    
 ```
 
-[XMLUtils](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/com/android/internal/util/XmlUtils.java;l=50)
+waitToFinish 可能会在主线程中执行文件写入任务。
 
-
-
-FileUtils
-
-## commit
-
-
-
-```text
-public boolean commit() {
-            long startTime = 0;
-
-            if (DEBUG) {
-                startTime = System.currentTimeMillis();
-            }
-
-            MemoryCommitResult mcr = commitToMemory();
-
-            SharedPreferencesImpl.this.enqueueDiskWrite(
-                mcr, null /* sync write on this thread okay */);
-            try {
-                mcr.writtenToDiskLatch.await();
-            } catch (InterruptedException e) {
-                return false;
-            } finally {
-                if (DEBUG) {
-                    Log.d(TAG, mFile.getName() + ":" + mcr.memoryStateGeneration
-                            + " committed after " + (System.currentTimeMillis() - startTime)
-                            + " ms");
-                }
-            }
-            notifyListeners(mcr);
-            return mcr.writeToDiskResult;
-        }
-```
-
-
-
-QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行。见 ActivityThread
-
-## QueuedWork 
-
-
-
-
-
-
+延时 100ms 可以避免apply 对应的文件写入任务每次都执行。在写入时有判断。
 
 [SharedPreferences灵魂拷问之原理](https://juejin.im/post/5df7af66e51d4557f17fb4f7)
 
-
-
-commit 和 apply 区别（为什么推荐用apply）？
+commit 和 apply 区别（为什么推荐用 apply）？
 
 commit 有可能会在主线程写入文件，并且没有针对短时间内频繁更新做优化，有可能导致每次操作都在主线程写入。
 
