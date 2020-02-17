@@ -757,7 +757,7 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
 
 
 
-关于 mFile 和 mBackupFile :
+关于 mFile 和 mBackupFile （要整 明白）:
 
 在loadFromDisk 方法中：
 
