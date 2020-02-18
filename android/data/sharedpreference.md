@@ -415,6 +415,7 @@ public void apply() {
             @Override
             public void run() {
                 try {
+                    //等待确保写入被执行
                     mcr.writtenToDiskLatch.await();
                 } catch (InterruptedException ignored) {
                 
@@ -445,7 +446,7 @@ apply 逻辑是：
 2. 通过 enqueueDiskWrite 将磁盘写入任务提交至任务队列
 3. 通知监听者
 
-#### EditorImpl\#commitToMemory\(\)
+### EditorImpl\#commitToMemory\(\)
 
 这个方法用于将在 Editor 上执行所有更改提交到内存的Sp中，并返回一个 MemoryCommitResult 对象提交信息，代码如下：
 
@@ -463,13 +464,13 @@ private MemoryCommitResult commitToMemory() {
     Map<String, Object> mapToWriteToDisk;
 
     synchronized (SharedPreferencesImpl.this.mLock) {
-        //当前有正在写入的任务在执行
         if (mDiskWritesInFlight > 0) {
             // 此时有写入任务正在执行，所以不能直接修改 mMap，而是克隆它
             mMap = new HashMap<String, Object>(mMap);
         }
         //mapToWriteToDisk 为所有键值对
         mapToWriteToDisk = mMap;
+        
         //写入任务+1
         mDiskWritesInFlight++;
 
@@ -537,7 +538,7 @@ private MemoryCommitResult commitToMemory() {
 }
 ```
 
-该方法的主要逻辑是，根据 Editor 的 mModified 中记录的发生修改的key，来更新内存中 map 的对应的 key。如果Sp有监听者，还需要记录发生修改的key，以便通知监听者。最后返回一个`MemoryCommitResult` 对象，它记录了当前内存中Sp版本号、发生变更的key、监听者和最要写入文件的map（即内存中Sp的所有键值对）。
+该方法的主要逻辑是，根据 Editor 的 mModified 中记录的发生修改的key，来更新内存中的 map 对应的 key。如果Sp有监听者，还需要记录发生修改的key，以便通知监听者。最后返回一个`MemoryCommitResult` 对象，它记录了当前内存中Sp版本号、发生变更的key、监听者和最要写入文件的map（即内存中Sp的所有键值对）。
 
 需要注意的点：
 
@@ -585,9 +586,9 @@ private static class MemoryCommitResult {
 
 其中 setDiskWriteResult 方法用来设置文件写入结果，后面会讲到。
 
-#### SharedPreferencesImpl\#enqueDiskWrite
+### SharedPreferencesImpl\#enqueDiskWrite
 
-将变更提交的内存后，调用了 enqueDiskWrite 进行文件写入，这个方法源码如下：
+将变更提交的内存后得到 MemoryCommitResult 对象后，调用了 enqueDiskWrite 进行文件写入，这个方法源码如下：
 
 ```text
 private void enqueueDiskWrite(final MemoryCommitResult mcr,
@@ -613,8 +614,6 @@ private void enqueueDiskWrite(final MemoryCommitResult mcr,
             }
         };
 
-    // Typical #commit() path with fewer allocations, doing a write on
-    // the current thread.
     if (isFromSyncCommit) {
         boolean wasEmpty = false;
         synchronized (mLock) {
@@ -633,13 +632,11 @@ private void enqueueDiskWrite(final MemoryCommitResult mcr,
 }
 ```
 
-方法中第二个参数是一个 Runnable ，用于在文件写入后执行。如果这个参数为null，那么就说明此次调用来自 commit\(\) 方法，否则此次调用就来自 apply \(\)方法。在上面的 apply 方法中，我们也看到它传了一个 Runnable。
+该方法中第二个参数是一个 Runnable ，用于在文件写入后执行。如果这个参数为null，那么就说明此次调用来自 commit\(\) 方法，否则此次调用就来自 apply \(\)方法，在上面的 apply 方法中，我们也看到它确实传了一个 Runnable。
 
-上面方法中的 writeToDiskRunnable 定义了文件写入的过程：先调用 writeToFile 将内存的Sp写入文件，然后将 mDiskWritesInFlight 减一，最后在执行 postWriteRunnable。
+上面方法中的 writeToDiskRunnable 定义了文件写入的过程：**先调用 writeToFile 将内存的Sp写入文件，然后将 mDiskWritesInFlight 减一，最后在执行 postWriteRunnable。**
 
-不过 writeToDiskRunnable  的执行时机却暗藏玄机。如果此调用来自 commit\(\) 方法，并且当前只有这次写入需要执行，那么就会在当前线程执行这次文件写入\(如果我们的调用来自主线程，就会直接在主线程中执行文件写入，这就可能导致性能问题\)；其他情况都会通过 QueuedWork 把写入任务加入队列中，稍后再写入。
-
-关于 QueuedWork 稍后再介绍，先来看看 writeToFile 方法。
+不过 writeToDiskRunnable  的执行时机却暗藏玄机。如果此调用来自 commit\(\) 方法，并且目前只有这次写入需要执行，那么就会在当前线程执行这次文件写入\(如果我们的调用来自主线程，就会直接在主线程中执行文件写入，这就可能导致性能问题\)；其他情况都会通过 QueuedWork 把写入任务加入队列中，关于 QueuedWork 稍后再介绍，先来看看 writeToFile 方法如何执行文件写入的。
 
 ### SharedPreferencesImpl\#writeToFile\(\)
 
@@ -700,9 +697,6 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
         }
     }//end if(fileExists)..
 
-    // Attempt to write the file, delete the backup and return true as atomically as
-    // possible.  If any exception occurs, delete the new file; next time we will restore
-    // from the backup.
     try {
         //创建文件输出流（会自动创建文件）
         FileOutputStream str = createFileOutputStream(mFile);
@@ -723,12 +717,13 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
         str.close();
         ContextImpl.setFilePermissionsFromMode(mFile.getPath(), mMode, 0);
 
-        // Writing was successful, delete the backup file if there is one.
+        //写入成功，删除备份文件
         mBackupFile.delete();
 
         //更新文件版本号
         mDiskStateGeneration = mcr.memoryStateGeneration;
 
+        //设置写入结果
         mcr.setDiskWriteResult(true, true);
 
         long fsyncDuration = fsyncTime - writeTime;
@@ -752,9 +747,11 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
 }
 ```
 
-对于 apply ，会将每次mcr的版本号与当前内存版本号进行对比，只有相等时才会执行文件写入。这样如果短时间内有多次文件写入请求，只有最后一次写入会被真正执行，避免冗余写入。
+在写入前，会先比较当前磁盘版本好与内存版本号，只有磁盘版本号小于内存版本号时，才会执行文件写入。
 
-在执行写入前，会先创建一个备份文件，当写入过程中发生意外，下次读取时可以从备份文件中恢复。在loadFromDisk 方法中就有如下代码：
+另外，对于 apply ，会将每次 mcr 的版本号与当前内存的最终版本号进行对比，只有相等时才会执行文件写入。这样一来，如果短时间内有多次 apply 文件写入请求，只有最后一次写入会被真正执行。
+
+在执行写入前，会先创建一个备份文件，当写入过程中发生意外，下次读取时可以从备份文件中恢复。在从文件加载Sp 的 loadFromDisk 方法中就有如下代码：
 
 ```text
 synchronized (mLock) {
@@ -769,14 +766,15 @@ synchronized (mLock) {
 }
 ```
 
-文件写入过程主要分以下几步:
+正式的文件写入过程主要分以下几步:
 
 1. 创建文件输出流
-2. 将 map 写入到xml 文件
+2. 将 map 写入到 xml 文件
 3. 删除备份文件 
 4. 更新磁盘Sp对应版本号 mDiskStateGeneration
+5. 设置写入结果
 
-针对文件写入情况，会调用 MemoryCommitResult\#setDiskWriteResult 方法设置结果，这个方法源码：
+关于第五步，针对文件写入情况，会调用 MemoryCommitResult\#setDiskWriteResult 方法设置结果，这个方法源码：
 
 ```text
 //lock
@@ -790,69 +788,133 @@ void setDiskWriteResult(boolean wasWritten, boolean result) {
 }
 ```
 
-调用了 writtenToDiskLatch.countDown\(\) 以通知正在等待的线程。    
+设置完结果后，调用了 writtenToDiskLatch.countDown\(\) 以通知正在等待的线程。 
 
-## commit
+以上就是 apply 的过程，主要分为两步：
+
+1. 提交修改至内存，生成一个 MemoryCommitResult 对象mcr,这个 mcr 记录着当前内存中sp的版本号、所有键值对、发生修改的键等信息
+2. 通过 QueuedWork 将文件写入任务入队，等待执行
+
+在讲解 QueuedWork 之前，我们先对照着看一下 commit 方法。
+
+### EditorImpl\#commit\(\)
 
 ```text
 public boolean commit() {
+    //1.提交至内存
     MemoryCommitResult mcr = commitToMemory();
-
+    //2.将文件写入任务入队列
     SharedPreferencesImpl.this.enqueueDiskWrite(
                 mcr, null);
     try {
+        //3.等待文件写入结果
         mcr.writtenToDiskLatch.await();
     } catch (InterruptedException e) {
         return false;
     } finally {
                 
     }
+    //4. 通知监听者
     notifyListeners(mcr);
+    //5. 返回文件写入结果
     return mcr.writeToDiskResult;
 }
 ```
 
-QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行。见 ActivityThread。
+commit 方法也包括提交内存和将文件写入任务入队，但后面还增加了等待文件写入完成的过程，因为commit 方法的返回值就是文件写入的结果。
 
-## QueuedWork 
+另外，调用 [SharedPreferencesImpl\#enqueDiskWrite](sharedpreference.md#sharedpreferencesimpl-enquediskwrite)方法时，第二个参数传的是 null,在分析该方法时我们也看到，该方法正是以这个参数是否为 null 来区分是commit 还是 apply 的。
+
+为了方便阅读，再把该方法源码贴一遍：
 
 ```text
+private void enqueueDiskWrite(final MemoryCommitResult mcr,
+                              final Runnable postWriteRunnable) {
+    //是否是 commit                          
+    final boolean isFromSyncCommit = (postWriteRunnable == null);
 
-private static final LinkedList<Runnable> sFinishers = new LinkedList<>();
-private static final LinkedList<Runnable> sWork = new LinkedList<>();
-private static boolean sCanDelay = true;
-private static final long DELAY = 100;
-
-@UnsupportedAppUsage
-public static void queue(Runnable work, boolean shouldDelay) {
-    Handler handler = getHandler();
-
-    synchronized (sLock) {
-        sWork.add(work);
-
-        if (shouldDelay && sCanDelay) {
-            handler.sendEmptyMessageDelayed(QueuedWorkHandler.MSG_RUN, DELAY);
-        } else {
-            handler.sendEmptyMessage(QueuedWorkHandler.MSG_RUN);
-        }
-    }
-}
-    
-    
-//创建新的 HanlderThread
-private static Handler getHandler() {
-        synchronized (sLock) {
-            if (sHandler == null) {
-                //创建新的线程
-                HandlerThread handlerThread = new HandlerThread("queued-work-looper",
-                        Process.THREAD_PRIORITY_FOREGROUND);
-                handlerThread.start();
-
-                sHandler = new QueuedWorkHandler(handlerThread.getLooper());
+    final Runnable writeToDiskRunnable = new Runnable() {
+            @Override
+            public void run() {
+                synchronized (mWritingToDiskLock) {
+                    //写入文件
+                    writeToFile(mcr, isFromSyncCommit);
+                }
+                synchronized (mLock) {
+                    //文件写入任务数减一
+                    mDiskWritesInFlight--;
+                }
+                if (postWriteRunnable != null) {
+                    //执行写入后的任务
+                    postWriteRunnable.run();
+                }
             }
-            return sHandler;
+        };
+
+    if (isFromSyncCommit) {
+        boolean wasEmpty = false;
+        synchronized (mLock) {
+            // mDiskWritesInFlight 在提交至内存时会自增，
+            // 如果是 1 说明此时没有其他的任务要写入
+            wasEmpty = mDiskWritesInFlight == 1;
+        }
+        if (wasEmpty) {
+            //在当前线程中直接执行写入
+            writeToDiskRunnable.run();
+            return;
         }
     }
+
+    QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
+}
+```
+
+对于 commit 方法提交，如果当前并没有其他文件写入任务要执行，那么会在当前线程执行文件写入。
+
+接下来终于要揭晓 QueuedWork 的神秘面纱了。
+
+## [QueuedWork](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java) 
+
+在看代码细节之前，先来看看官方注释对 QueuedWork 有个初步了解：
+
+> Internal utility class to keep track of process-global work that's outstanding and hasn't been finished yet. 
+>
+> New work will be {@link [\#queue](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java;l=221) queued}. It is possible to add 'finisher'-runnables that are {@link [\#waitToFinish](https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/app/QueuedWork.java;l=154) guaranteed to be run}. This is used to make sure the work has been finished.
+
+> This was created for writing SharedPreference edits out asynchronously so we'd have a mechanism to wait for the writes in Activity.onPause and similar places, but we may use this mechanism for  other things in the future. 
+>
+>  The queued asynchronous work is performed on a separate, dedicated thread.
+
+通过以上注释，可以获取一下信息：
+
+1. 用于维护进程级别的任务
+2. 新任务通过queue方法入队
+3. 可以增加 finisher 任务，它们肯定会被执行，可以用来确保任务已经被执行完成
+4. 目前主要用于执行 Sp 的文件同步并提供等待完成机制
+5. 队列的任务会在单独线程中执行。
+
+下面就来看看 QueuedWork 的代码实现，先来看看它的几个重要的静态属性：
+
+### 静态属性
+
+```text
+private static final long DELAY = 100;
+//类的锁
+private static final Object sLock = new Object();
+//处理工作的锁，确保只有一个线程在处理任务
+private static Object sProcessingWork = new Object();
+
+private static Handler sHandler = null;
+//存储所有finisher
+private static final LinkedList<Runnable> sFinishers = new LinkedList<>();
+//存储所有任务
+private static final LinkedList<Runnable> sWork = new LinkedList<>();
+//是否允许延迟
+private static boolean sCanDelay = true;
+
+    
+    
+
  
     
     
@@ -860,9 +922,65 @@ public static void addFinisher(Runnable finisher) {
     synchronized (sLock) {
         sFinishers.add(finisher);
     }
+}    
+```
+
+### queue
+
+前面在 SharedPreferencesImpl\#enqueDiskWrite\(\)，调用了queue 方法将文件写入工作入队，该方法源码如下：
+
+```text
+public static void queue(Runnable work, boolean shouldDelay) {
+    //1.获取 handler
+    Handler handler = getHandler();
+
+    synchronized (sLock) {
+        //2. 将work添加到任务列表
+        sWork.add(work);
+        //3. 发送消息触发执行
+        if (shouldDelay && sCanDelay) {
+            handler.sendEmptyMessageDelayed(QueuedWorkHandler.MSG_RUN, DELAY);
+        } else {
+            handler.sendEmptyMessage(QueuedWorkHandler.MSG_RUN);
+        }
+    }
 }
-    
-    
+```
+
+主要逻辑就是讲任务加入队列中，然后通过handler发送消息来出发任务的执行。这个方法的第二个参数标识是否需要延后一段时间，在SharedPreferencesImpl\#enqueDiskWrite\(\)中是这样调用的：
+
+```text
+QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
+```
+
+也就是说，对于 commit ，shouldDelay 为 false；对于 apply ，shouldDelay 为true。shouldDelay 决定了在通过 handler 发送消息时是否启用延时。
+
+### getHandler\(\)
+
+上面方法中 handler 的获取调用了 getHandler\(\) 方法，其源码如下：
+
+```text
+private static Handler getHandler() {
+    synchronized (sLock) {
+        if (sHandler == null) {
+            //创建新的线程
+            HandlerThread handlerThread = new HandlerThread("queued-work-looper",
+                    Process.THREAD_PRIORITY_FOREGROUND);
+            handlerThread.start();
+            sHandler = new QueuedWorkHandler(handlerThread.getLooper());
+        }
+        return sHandler;
+    }
+}
+```
+
+可以看到，初始化时，新建了一个 HanlderThread ，并基于它创建了一个 QueuedWorkHandler 赋值给 sHandler。
+
+### QueuedWorkHandler
+
+QueuedWorkHandler 是 QueuedWork 的静态内部类，它的定义很简单，在收到MSG\_RUN消息后，调用 processPendingWork\(\) 处理所有待执行的任务。
+
+```text
 private static class QueuedWorkHandler extends Handler {
     static final int MSG_RUN = 1;
 
@@ -876,8 +994,11 @@ private static class QueuedWorkHandler extends Handler {
         }
     }
 }
-    
-    
+```
+
+### processPendingWork
+
+```text
 private static void processPendingWork() {
     synchronized (sProcessingWork) {
         LinkedList<Runnable> work;
@@ -886,99 +1007,103 @@ private static void processPendingWork() {
             work = (LinkedList<Runnable>) sWork.clone();
             sWork.clear();
 
-            // Remove all msg-s as all work will be processed now
+            // 移除所有MSG_RUN消息
             getHandler().removeMessages(QueuedWorkHandler.MSG_RUN);
         }
 
         if (work.size() > 0) {
+            //按顺序执行任务
             for (Runnable w : work) {
                 w.run();
             }
         }
     }
 }
-    
-    
-            
+```
+
+processPendingWork 的逻辑也很简单，就是将任务列表中的任务按序执行。正常情况下，这个过程就是在 getHandler 中创建的 HandlerThread 中进行。
+
+那不正常情况呢？
+
+### waitToFinish
+
+```text
 /**
-     * Trigger queued work to be processed immediately. The queued work is processed on a separate
-     * thread asynchronous. While doing that run and process all finishers on this thread. The
-     * finishers can be implemented in a way to check weather the queued work is finished.
-     *
-     * Is called from the Activity base class's onPause(), after BroadcastReceiver's onReceive,
-     * after Service command handling, etc. (so async work is never lost)
-     */
+ * Trigger queued work to be processed immediately. The queued work is processed on a separate
+ * thread asynchronous. While doing that run and process all finishers on this thread. The
+ * finishers can be implemented in a way to check weather the queued work is finished.
+ *
+ * Is called from the Activity base class's onPause(), after BroadcastReceiver's onReceive,
+ * after Service command handling, etc. (so async work is never lost)
+ */
 public static void waitToFinish() {
-    long startTime = System.currentTimeMillis();
     boolean hadMessages = false;
 
-        Handler handler = getHandler();
+    Handler handler = getHandler();
 
-        synchronized (sLock) {
-            if (handler.hasMessages(QueuedWorkHandler.MSG_RUN)) {
-                // Delayed work will be processed at processPendingWork() below
-                handler.removeMessages(QueuedWorkHandler.MSG_RUN);
+    synchronized (sLock) {
+        if (handler.hasMessages(QueuedWorkHandler.MSG_RUN)) {
+            // Delayed work will be processed at processPendingWork() below
+            handler.removeMessages(QueuedWorkHandler.MSG_RUN);
 
-                if (DEBUG) {
-                    hadMessages = true;
-                    Log.d(LOG_TAG, "waiting");
-                }
-            }
-
-            // We should not delay any work as this might delay the finishers
-            sCanDelay = false;
-        }
-
-        StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskWrites();
-        try {
-            processPendingWork();
-        } finally {
-            StrictMode.setThreadPolicy(oldPolicy);
-        }
-
-        try {
-            while (true) {
-                Runnable finisher;
-
-                synchronized (sLock) {
-                    finisher = sFinishers.poll();
-                }
-
-                if (finisher == null) {
-                    break;
-                }
-
-                finisher.run();
-            }
-        } finally {
-            sCanDelay = true;
-        }
-
-        synchronized (sLock) {
-            long waitTime = System.currentTimeMillis() - startTime;
-
-            if (waitTime > 0 || hadMessages) {
-                mWaitTimes.add(Long.valueOf(waitTime).intValue());
-                mNumWaits++;
-
-                if (DEBUG || mNumWaits % 1024 == 0 || waitTime > MAX_WAIT_TIME_MILLIS) {
-                    mWaitTimes.log(LOG_TAG, "waited: ");
-                }
+            if (DEBUG) {
+                hadMessages = true;
+                Log.d(LOG_TAG, "waiting");
             }
         }
+
+        // We should not delay any work as this might delay the finishers
+        sCanDelay = false;
     }
-    
+
+    StrictMode.ThreadPolicy oldPolicy = StrictMode.allowThreadDiskWrites();
+    try {
+        processPendingWork();
+    } finally {
+        StrictMode.setThreadPolicy(oldPolicy);
+    }
+
+    try {
+        while (true) {
+            Runnable finisher;
+
+            synchronized (sLock) {
+                finisher = sFinishers.poll();
+            }
+
+            if (finisher == null) {
+                break;
+            }
+
+            finisher.run();
+        }
+    } finally {
+        sCanDelay = true;
+    }
+    //...
+
+}
 ```
+
+
+
+
+
+
 
 waitToFinish 可能会在主线程中执行文件写入任务。
 
 延时 100ms 可以避免apply 对应的文件写入任务每次都执行。在写入时有判断。
 
-[SharedPreferences灵魂拷问之原理](https://juejin.im/post/5df7af66e51d4557f17fb4f7)
+QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行。见 ActivityThread。
+
+
 
 commit 和 apply 区别（为什么推荐用 apply）？
 
 commit 有可能会在主线程写入文件，并且没有针对短时间内频繁更新做优化，有可能导致每次操作都在主线程写入。
 
 apply 如果短时间内\(100ms\)有多次提交，只有最后一次会执行文件写入。并且是在单独的线程里执行写入，不会影响性能。
+
+[SharedPreferences灵魂拷问之原理](https://juejin.im/post/5df7af66e51d4557f17fb4f7)
 
