@@ -1106,9 +1106,7 @@ waitToFinish 会在当前线程立刻执行所有待执行的任务，任务执�
 
 
 
-
-
-QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行。见 ActivityThread。
+* [ ] 见 ActivityThread
 
 
 
