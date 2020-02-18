@@ -947,13 +947,34 @@ public static void queue(Runnable work, boolean shouldDelay) {
 }
 ```
 
-主要逻辑就是讲任务加入队列中，然后通过handler发送消息来出发任务的执行。这个方法的第二个参数标识是否需要延后一段时间，在SharedPreferencesImpl\#enqueDiskWrite\(\)中是这样调用的：
+主要逻辑就是讲任务加入队列中，然后通过handler发送消息来出发任务的执行。这个方法的第二个参数标识是否需要延后一段时间（DELAY 的值是100），在SharedPreferencesImpl\#enqueDiskWrite\(\)中是这样调用的：
 
 ```text
 QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
 ```
 
 也就是说，对于 commit ，shouldDelay 为 false；对于 apply ，shouldDelay 为true。shouldDelay 决定了在通过 handler 发送消息时是否启用延时。
+
+那为什么要 apply 进行延时呢？ 
+
+在 SharedPreferencesImpl 的 writeToFile 方法中有如下判断：
+
+```text
+if (mDiskStateGeneration < mcr.memoryStateGeneration) {
+    if (isFromSyncCommit) {
+        needsWrite = true;
+    } else {
+        synchronized (mLock) {
+            //对于 apply，没有必要每次都写入，而是只执行最新一次的提交对应的写入
+            if (mCurrentMemoryStateGeneration == mcr.memoryStateGeneration) {
+                needsWrite = true;
+            }
+        }
+    }
+}
+```
+
+DELAY 的值是常量100，如果100ms 内有多次 apply 提交，这个延时可以确保当100ms后，任务队列中的文件写入任务被统一处理时，只有最新的apply提交对应的文件写入任务会真正被执行。因为只有它对应的mcr的版本号是和内存 一致的，其他的mcr版本都低于内存版本。这样可以有效去除冗余的文件写入，提升性能。
 
 ### getHandler\(\)
 
@@ -1037,7 +1058,6 @@ processPendingWork 的逻辑也很简单，就是将任务列表中的任务按�
  * after Service command handling, etc. (so async work is never lost)
  */
 public static void waitToFinish() {
-    boolean hadMessages = false;
 
     Handler handler = getHandler();
 
@@ -1045,11 +1065,6 @@ public static void waitToFinish() {
         if (handler.hasMessages(QueuedWorkHandler.MSG_RUN)) {
             // Delayed work will be processed at processPendingWork() below
             handler.removeMessages(QueuedWorkHandler.MSG_RUN);
-
-            if (DEBUG) {
-                hadMessages = true;
-                Log.d(LOG_TAG, "waiting");
-            }
         }
 
         // We should not delay any work as this might delay the finishers
@@ -1085,15 +1100,13 @@ public static void waitToFinish() {
 }
 ```
 
+waitToFinish 会在当前线程立刻执行所有待执行的任务，任务执行完后会一并执行所有 finisher 来通知任务执行完成。
+
+而通过方法的注释可以看出，这个方法主要在 Activity的onPause 方法中、BroadcastReceiver 的 onReceive 方法后、以及Service 的 onCommand 后，以确保所有任务都被执行没有丢失，但这回导致在主线程执行文件写入，是有可能造成性能问题的。
 
 
 
 
-
-
-waitToFinish 可能会在主线程中执行文件写入任务。
-
-延时 100ms 可以避免apply 对应的文件写入任务每次都执行。在写入时有判断。
 
 QueuedWork 的 waitToFinish 会在 Activity onPause onStop stopService 中执行。见 ActivityThread。
 
@@ -1104,6 +1117,14 @@ commit 和 apply 区别（为什么推荐用 apply）？
 commit 有可能会在主线程写入文件，并且没有针对短时间内频繁更新做优化，有可能导致每次操作都在主线程写入。
 
 apply 如果短时间内\(100ms\)有多次提交，只有最后一次会执行文件写入。并且是在单独的线程里执行写入，不会影响性能。
+
+## 建议
+
+尽量使用apply
+
+多次edit，一次apply
+
+降低sp的大小，避免一个app只使用一个Sp，这样文件将会变得很大，写入时间会变长。如果恰好卡在 waitToFinish 这样的时间点，有可能造成 ANR。
 
 [SharedPreferences灵魂拷问之原理](https://juejin.im/post/5df7af66e51d4557f17fb4f7)
 
