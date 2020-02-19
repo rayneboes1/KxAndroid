@@ -107,6 +107,7 @@
     * [布局优化](android/performan_optimize/bu-ju-you-hua.md)
     * [ANR](android/performan_optimize/anr.md)
   * [打包构建](android/build_and_bundle/README.md)
+    * [APK 签名流程](android/build_and_bundle/apk-qian-ming-liu-cheng.md)
     * [APK 打包流程](android/build_and_bundle/apk-da-bao-liu-cheng.md)
   * [架构](android/jia-gou/README.md)
     * [Android 系统架构](android/jia-gou/android-xi-tong-jia-gou.md)
