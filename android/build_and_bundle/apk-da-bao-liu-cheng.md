@@ -1,6 +1,6 @@
 # APK 打包流程
 
-
+[https://developer.android.com/studio/build\#build-process](https://developer.android.com/studio/build#build-process)
 
 ## APK 签名
 

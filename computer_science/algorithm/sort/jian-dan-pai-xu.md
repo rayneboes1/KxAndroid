@@ -61,7 +61,6 @@ public class InsertSort implements ISort {
                     break;
                 }
             }
-            //此时 arr[j] 为第一个小于 t 的位置，或者为-1
             arr[j+1] = t;
         }
     }
@@ -69,8 +68,6 @@ public class InsertSort implements ISort {
 ```
 
 ## 选择排序
-
-以第一个元素为初始值，在后面的所有元素中找到最小值，如果这个值比初始值还小，那么就交互两个元素位置。依次类推，直到最后。
 
 ```text
 public class SelectSort implements ISort {
@@ -93,7 +90,6 @@ public class SelectSort implements ISort {
             if (i != minIndex) {
                 Util.swap(arr, i, minIndex);
             }
-            
         }
     }
 }
