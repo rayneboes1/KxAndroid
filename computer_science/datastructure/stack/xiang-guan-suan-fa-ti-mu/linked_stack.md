@@ -1,5 +1,7 @@
 # 用链表实现栈
 
+对链表使用头插法，后添加的元素一直位于链表头部。
+
 ```text
 public class LinkedStack implements Stack {
 
@@ -47,18 +49,6 @@ public class LinkedStack implements Stack {
     }
 
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        Node n = top.next;
-        while (n != null) {
-            sb.append(n.data);
-            sb.append(",");
-            n = n.next;
-        }
-        return sb.toString();
-    }
-
-    @Override
     public void clear() {
         //清理数据
         while (top.next != null) {
@@ -67,7 +57,6 @@ public class LinkedStack implements Stack {
             n.next = null;
         }
         size = 0;
-
     }
 
 

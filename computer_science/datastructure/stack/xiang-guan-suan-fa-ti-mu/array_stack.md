@@ -45,16 +45,6 @@ public class ArrayStack implements Stack {
     public void clear() {
         size = 0;
     }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = size - 1; i >= 0; i--) {
-            sb.append(array[i]);
-            sb.append(",");
-        }
-        return sb.toString();
-    }
 }
 ```
 
