@@ -19,6 +19,7 @@
     * [队列](computer_science/datastructure/queue/README.md)
       * [知识点](computer_science/datastructure/queue/zhi-shi-dian.md)
       * [相关题目](computer_science/datastructure/queue/xiang-guan-ti-mu/README.md)
+        * [用两个栈实现队列](computer_science/datastructure/queue/xiang-guan-ti-mu/yong-liang-ge-zhan-shi-xian-dui-lie.md)
         * [实现循环队列](computer_science/datastructure/queue/xiang-guan-ti-mu/circular_queue.md)
         * [用链表实现队列](computer_science/datastructure/queue/xiang-guan-ti-mu/linked_queue.md)
         * [用数组实现队列](computer_science/datastructure/queue/xiang-guan-ti-mu/array_queue.md)
