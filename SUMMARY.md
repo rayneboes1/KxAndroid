@@ -17,6 +17,7 @@
     * [哈希算法](computer_science/algorithm/ha-xi-suan-fa.md)
   * [数据结构](computer_science/datastructure/README.md)
     * [队列](computer_science/datastructure/queue/README.md)
+      * [知识点](computer_science/datastructure/queue/zhi-shi-dian.md)
       * [相关题目](computer_science/datastructure/queue/xiang-guan-ti-mu/README.md)
         * [实现循环队列](computer_science/datastructure/queue/xiang-guan-ti-mu/circular_queue.md)
         * [用链表实现队列](computer_science/datastructure/queue/xiang-guan-ti-mu/linked_queue.md)
