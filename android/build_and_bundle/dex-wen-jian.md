@@ -1,8 +1,8 @@
 # dex 文件
 
+
+
 {% embed url="https://tech.youzan.com/qian-tan-android-dexwen-jian/" %}
-
-
 
 ### 与 class 文件相比优势？
 
@@ -21,4 +21,6 @@
 混淆和压缩可以减少dex中记录的字符串长度，从而减少dex文件大小
 
 [Android Dex VS Class：实例图解剖析两种格式文件结构、优劣](https://blog.csdn.net/ITermeng/article/details/79218060)
+
+[浅谈 Android Dex 文件](https://tech.youzan.com/qian-tan-android-dexwen-jian/)
 
