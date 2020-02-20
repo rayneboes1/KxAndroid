@@ -2,8 +2,6 @@
 
 
 
-{% embed url="https://tech.youzan.com/qian-tan-android-dexwen-jian/" %}
-
 ### 与 class 文件相比优势？
 
 去除了类与类之间的重复信息，比如每个类的class文件中都有一个常量池，而dex会去除冗余，区域复用并整合，整个工程中的同类型数据存储在一个数据区域，这样dex文件较小；
@@ -19,6 +17,8 @@
 * 数据区：此块可分成普通数据区和链接数据区，后者听起来较为陌生，总所周知Android中常有一些动态链接库so的引用，而链接数据区就是对这个的指向。
 
 混淆和压缩可以减少dex中记录的字符串长度，从而减少dex文件大小
+
+### 相关博客
 
 [Android Dex VS Class：实例图解剖析两种格式文件结构、优劣](https://blog.csdn.net/ITermeng/article/details/79218060)
 
