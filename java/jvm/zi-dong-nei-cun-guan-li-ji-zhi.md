@@ -75,11 +75,11 @@ JDK 1.4 加入了 NIO 类，引入了一种基于通道（Channel）和缓冲区
 
 * 强引用（Strong Reference）: 形如 Object a = new Object\(\)的引用，只要对象的强引用存在，垃圾收集器就算抛出 OOM 也永远不会回收此对象
 * 软引用（Soft Reference）：用来描述有用但非必须的对象。对于软引用关联的对象，在即将抛出OOM之前，会将它们进行一次回收，如果回收完空间还是不够，才抛出 OOM。JDK 提供了 SoftReference 来实现软引用。
-* 弱引用（Weak Reference）：描述非必须的对象，比软引用更弱一些，被弱引用关联的对象只能生存到下一次垃圾回收之前。当垃圾收集器工作时，无论内存是否够用，都会回收只被弱引用关联的对象。JDK 提供 WeakReference 实现了弱引用。
+* 弱引用（Weak Reference）：**描述非必须的对象，比软引用更弱一些，被弱引用关联的对象只能生存到下一次垃圾回收之前**。当垃圾收集器工作时，无论内存是否够用，都会回收只被弱引用关联的对象。JDK 提供 WeakReference 实现了弱引用。
 
 > 通常用于避免内存泄漏。比如[Handler的使用](https://wenhaiz.xyz/use-handler-correctly)
 
-* 虚引用（Phantom Reference）:最弱的引用关系，不影响对象的生存时间，无法通过虚引用获取对象实例。为对象设置虚引用的目的就是在回收时收到系统通知。JDK 提供了PhantomReference 实现虚引用。
+* 虚引用（Phantom Reference）:最弱的引用关系，不影响对象的生存时间，**无法通过虚引用获取对象实例。**为对象设置虚引用的目的就是在回收时收到系统通知。JDK 提供了PhantomReference 实现虚引用。
 
 ## 垃圾回收算法
 
