@@ -41,6 +41,7 @@
       * [二叉树](computer_science/datastructure/shu/binary_tree.md)
       * [二叉查找树](computer_science/datastructure/shu/binary_search_tree.md)
       * [AVL 树](computer_science/datastructure/shu/avl-shu.md)
+      * [Trie 树](computer_science/datastructure/shu/trie-shu.md)
       * [红黑树](computer_science/datastructure/shu/red_black_tree.md)
     * [堆](computer_science/datastructure/heap/README.md)
       * [存储](computer_science/datastructure/heap/cun-chu.md)
