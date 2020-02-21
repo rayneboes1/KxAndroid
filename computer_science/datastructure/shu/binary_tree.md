@@ -14,11 +14,13 @@
 
 ![&#x5B8C;&#x5168;&#x4E8C;&#x53C9;&#x6811;&#x793A;&#x4F8B;](../../../.gitbook/assets/image%20%2822%29.png)
 
-**完全二叉树适合使用数组存储**，对于下标为i的节点，下标 2\*i 的节点就是其左子节点，下标 2\*i+1 的节点就是其右子节点。
+**完全二叉树适合使用数组存储**，对于下标为i的节点，下标 2\*i 的节点就是其左子节点，下标 2\*i+1 的节点就是其右子节点，而 i/2 对应的结点就是它的父结点。
 
 ![&#x7528;&#x6570;&#x7EC4;&#x5B58;&#x50A8;&#x4E8C;&#x53C9;&#x6811;](../../../.gitbook/assets/image%20%2823%29.png)
 
 ### 二叉树的遍历
+
+递归操作。
 
 #### 前序遍历
 
@@ -100,6 +102,7 @@ static void levelOrder(TreeNode root) {
     while (!q.isEmpty()) {
         TreeNode n = q.poll();
         System.out.println(n.value);
+        //将左右结点放入队列
         if (n.left != null) {
             q.offer(n.left);
         }
