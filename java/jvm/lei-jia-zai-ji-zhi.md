@@ -36,7 +36,7 @@
 
 真正开始执行类中定义的 Java 程序代码，根据程序员制定的主观计划去初始化类变量和其他资源。
 
-## 类加载器的双亲委派模型（TODO）
+## 类加载器的Parents Delegation 模型（TODO）
 
 ![](../../.gitbook/assets/jie-ping-2019121122.42.48.png)
 
