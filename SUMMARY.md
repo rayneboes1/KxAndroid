@@ -65,6 +65,7 @@
   * [并发编程](java/concurrent/README.md)
     * [理解 volatile](java/concurrent/understanding_volatile.md)
   * [集合](java/collection.md)
+  * [注解](java/zhu-jie.md)
   * [反射](java/reflection.md)
   * [JVM](java/jvm/README.md)
     * [类加载机制](java/jvm/lei-jia-zai-ji-zhi.md)
