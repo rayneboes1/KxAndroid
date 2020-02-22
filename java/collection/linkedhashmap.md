@@ -122,7 +122,7 @@ void afterNodeInsertion(boolean evict) { // possibly remove eldest
 
 `evict` 标识 HashMap 是否处于创建中，evict 为 `false` 的情况主要包括在构造方法中、`clone`、`readFromObject`等方法中调用 put 相关操作时，其他情况一律为 `true`。
 
-可以看出 `afterNodeInsertion` 主要是根据需要移除头结点，然后在移除后会有调整顺序的操作，不过已经是在`afterNodeRemoval`方法中了。 \(`removeNode` 会调用 `afterNodeRemoval`\)
+可以看出 `afterNodeInsertion` 主要是根据需要\(removeEldestEntry 方法返回值\)移除头结点，然后在移除后会有调整顺序的操作，不过已经是在`afterNodeRemoval`方法中了。 \(`removeNode` 会调用 `afterNodeRemoval`\)
 
 ### `afterNodeRemoval`
 
