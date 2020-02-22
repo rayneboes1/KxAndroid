@@ -2,9 +2,9 @@
 
 ### Java集合框架中有哪些类？都有什么特点？
 
-![Java &#x96C6;&#x5408;&#x6846;&#x67B6;&#x7C7B;&#x56FE;](../../.gitbook/assets/2243690-9cd9c896e0d512ed.gif)
+![Java &#x96C6;&#x5408;&#x6846;&#x67B6;&#x7C7B;&#x56FE;](../.gitbook/assets/2243690-9cd9c896e0d512ed.gif)
 
-### 集合、数组、泛型的关系
+### 集合、数组、泛型的关系，并比较
 
 集合是包含多个对象的简单对象，所包含的对象称为元素。在 Java 中对应 Collection 接口，是一组允许重复的对象。
 
@@ -12,31 +12,25 @@
 
 泛型提供了**编译时类型安全检测**机制，该机制允许程序员在编译时检测到非法的类型。泛型的本质是参数化类型，也就是说所操作的数据类型被指定为一个参数。
 
-### ArrayList  和 LinkList 的区别
+### ArrayList  和 LinkList 的区别？
 
 ArrayList 内部使用**数组**的形式实现了存储，实现了 `RandomAccess` 接口，数组中的元素在内存中的地址是连续的，因此可以利用数组的下标进行元素的随机访问，速度非常快。
 
-ArrayList 的初始大小是 10，插入新元素的时候，会判断是否需要扩容，扩容是扩容为原容量的1.5倍，扩容方式是利用数组的复制，因此有一定的开销；另外，ArrayList在进行元素插入的时候，需要移动插入位置之后的所有元素，位置越靠前，需要位移的元素越多，开销越大，相反，插入位置越靠后的话，开销就越小了，如果在最后面进行插入，那就不需要进行位移。  
+ArrayList 在初始化的时候，有初始大小10，插入新元素的时候，会判断是否需要扩容，扩容是扩容为原容量的1.5倍，扩容方式是利用数组的复制，因此有一定的开销；另外，ArrayList在进行元素插入的时候，需要移动插入位置之后的所有元素，位置越靠前，需要位移的元素越多，开销越大，相反，插入位置越靠后的话，开销就越小了，如果在最后面进行插入，那就不需要进行位移。  
 
-LinkedList 内部使用**双向链表**的结构实现存储，LinkedList 有一个内部类作为存放元素的单元，里面有三个属性，用来存放元素本身以及前驱节点和后继节点的引用。LinkedList 每一个元素的**地址不连续**，通过引用找到当前结点的上一个结点和下一个结点，即插入和删除效率较高，时间复杂度为O\(1\)，而 get 和 set 则较为低效。另外，LinkedList 还实现了 `Deque`接口，可以用来作为队列使用。  
+LinkedList 内部使用**双向链表**的结构实现存储，LinkedList 有一个内部类作为存放元素的单元，里面有三个属性，用来存放元素本身以及前驱节点和后继节点的引用。LinkedList 每一个元素的**地址不连续**，通过引用找到当前结点的上一个结点和下一个结点，即插入和删除效率较高，时间复杂度为O\(1\)，而 get 和 set 则较为低效。另外，LinkedList 还实现了 `Deque`接口，可以用来作为队列使用  
   
 当插入和删除操作较频繁时，使用 LinkedList 性能更好；当随机访问比较频繁时，使用 ArrayList 更好。
 
 ### ArrayList 和 Vector 的区别？
 
-两者都实现了 List 接口并且都是基于数组。但是 **Vector 是线程安全的**，它的关键方法都通过synchronized 关键字来保证线程安全，但 ArrayList 是非线程安全的。如果没有并发要求，应该使用 ArrayList，使用 Vector 锁操作会影响性能。
+两者都实现了 List 接口并且都是基于数组。但是 Vector 是线程安全的，它的关键方法都通过synchronized 关键字来保证线程安全，但 ArrayList 是非线程安全的。如果没有并发要求，应该使用 ArrayList，使用 Vector 锁操作会影响性能。
 
 ArrayList 在扩容时数组长度会增大为原来的1.5倍，但 Vector 可以通过在构造方法传入 `capacityIncrement` 来指定每次增加的长度，如果不指定默认为原来的两倍。
 
 ### HashSet 和 TreeSet 的区别？
 
 即 HashMap 与 TreeMap 的区别。HashSet 不保证元素顺序，而 TreeSet 是可以保证元素按 key 排序的，默认是按key的自然顺序，可以在构造函数中传入 `Comparator` 来自定义顺序。
-
-### HashMap 和 TreeMap 的区别
-
-HashMap 是一种哈希表，基于数组，处理哈希冲突时使用了链表+红黑树，不保证key的顺序；而TreeMap 通过红黑树管理键值对（不使用hash），可以实现key的有序输出。默认是按key的自然顺序，可以在构造函数中传入 `Comparator` 来自定义顺序。
-
-TreeMap 查找时间复杂度O\(logn\)，而HashMap 基本为O\(1\)。
 
 ### [HashMap 和 Hashtable 的区别？](https://www.cnblogs.com/xinzhao/p/5644175.html)
 
@@ -54,13 +48,11 @@ HashMap是支持null键和null值的，而HashTable在遇到null时，会抛出N
 
 #### 初始大小和扩容方案
 
-HashTable默认的初始大小为11，之后每次扩充为原来的2n+1。HashMap默认的初始化大小为16，之后每次扩充为原来的2倍。
-
-如果在创建时给定了初始化大小，那么HashTable会直接使用给定的大小，而HashMap会将其扩充为2的幂次方大小。
+HashTable默认的初始大小为11，之后每次扩充为原来的2n+1。HashMap默认的初始化大小为16，之后每次扩充为原来的2倍。还有我没列出代码的一点，就是如果在创建时给定了初始化大小，那么HashTable会直接使用你给定的大小，而HashMap会将其扩充为2的幂次方大小。
 
 #### 线程安全
 
-HashTable是同步的，公开的方法比如get都使用了synchronized，而遍历视图比如keySet都使用了Collections.synchronizedXXX进行了同步包装；而 HashMap 是非线程安全的。
+HashTable是同步的，公开的方法比如get都使用了synchronized描述符。而遍历视图比如keySet都使用了Collections.synchronizedXXX进行了同步包装。HashMap不是，也就是说HashTable在多线程使用的情况下，不需要做额外的同步，而HashMap则不行。
 
 #### Hash 算法
 
@@ -93,10 +85,6 @@ JDK 1.8 中处理哈希冲突同HashMap ，抛弃了原有的 Segment 分段锁�
 > **比较并交换\(compare and swap, CAS\)**，是原子操作的一种，可用于在多线程编程中实现不被打断的数据交换操作，从而避免多线程同时改写某一数据时由于执行顺序不确定性以及中断的不可预知性产生的数据不一致问题。 该操作通过将内存中的值与指定数据进行比较，当数值一样时将内存中的数据替换为新的值。
 >
 > **CAS操作基于CPU提供的原子操作指令实现**。对于Intel X86处理器，可通过在汇编指令前增加LOCK 前缀来锁定系统总线，**使系统总线在汇编指令执行时无法访问相应的内存地址**。而各个编译器根据这个特点实现了各自的原子操作函数。
-
-为什么舍弃Segment？
-
-主要还是为了提升性能，segment 不管怎样还是需要用到同步锁，而使用cas，对于新增键值对的情况进行的优化，可以有效提升性能（可能新增键值对的操作概率比较大，这一部分效率提升比较明显）。
 
 [JDK 1.7 ConcurrentHashMap](https://www.ibm.com/developerworks/cn/java/java-lo-concurrenthashmap/index.html)  
 

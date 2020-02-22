@@ -51,7 +51,7 @@ while(!initialized){
 doStuffWithConfig();
 ```
 
-还有[双重检查的单例模式](../../software_engineering/design_pattern/dan-li-mo-shi.md#lan-han-mo-shi-shuang-zhong-null-jian-cha)，如果静态变量没有被volatile修饰，也可能导致类似的问题。
+还有[双重检查的单例模式]()，如果静态变量没有被volatile修饰，也可能导致类似的问题。
 
 > volatile 禁止重排序的语义在 JDK 1.5 才被修复，之前的版本就算使用 volatile 也不能完全避免指令重排序，即在 JDK 1.5 之前无法通过 DCL 方式实现单例模式。
 

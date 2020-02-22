@@ -1,12 +1,10 @@
-# LinkedHashMap
+# LinkedHashMap 源码
 
 LinkedHashMap 是一个哈希表，拥有可预测的迭代顺序。与 HashMap 不同点在于使用了一个双向链表来维护所有的 Entry，双向链表定义了哈希表的迭代顺序。
 
 ## 一个参数
 
-LinkedHashMap 的迭代顺序有两种：节点插入顺序和节点访问循序。可通过在构造方法中传递 `boolean accessOrder`来指定。
-
-当 `accessOrder` 为 false 时，迭代顺序为节点插入顺序；当 `accessOrder` 为 true 时，迭代顺序为节点访问顺序。
+LinkedHashMap 的迭代顺序有两种：节点插入顺序和节点访问顺序。可通过在构造方法中传递 `boolean accessOrder`来指定——当 `accessOrder` 为 false 时，迭代顺序为节点插入顺序；当 `accessOrder` 为 true 时，迭代顺序为节点访问顺序。
 
 ## 节点类型
 
