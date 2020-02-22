@@ -1,5 +1,7 @@
 # 基础
 
+## 字符串
+
 ### String、StringBuffer和StringBuilder的区别？
 
 `String`/`StringBuffer`/`StringBuilder`最终底层存储与操作的都是 `char`数组。
