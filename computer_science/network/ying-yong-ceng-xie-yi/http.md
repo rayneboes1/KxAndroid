@@ -36,7 +36,7 @@ HTTP 1.1中增加Host请求头字段后，WEB浏览器可以使用主机头名�
 
 将原有的文本格式改为二进制帧的形式，每个帧有一个stream id标识，每个请求都对应一个stream id。
 
-![](../../../.gitbook/assets/image%20%288%29.png)
+![](../../../.gitbook/assets/image%20%289%29.png)
 
 ### 连接复用
 
@@ -46,7 +46,7 @@ HTTP 2.0 由于将数据组织成帧，所以可以同时发送数据帧，收�
 
 另外，还可以给 stream 设置优先级，可以使重要的请求优先被发送。 也可以设置请求之间的依赖。
 
-![](../../../.gitbook/assets/image%20%2813%29.png)
+![](../../../.gitbook/assets/image%20%2814%29.png)
 
 ### Header 压缩
 
