@@ -18,13 +18,35 @@
 * 服务端发送FIN 报文段，进入 LAST\_ACK 状态；客户端接收FIN报文段，并发送ACK，进入TIMED\_WAIT ，一段时间后关闭连接
 * 服务端接收ACK后，关闭连接
 
-## 流量控制
+## 流量控制（Flow Control）
 
-控制发送方发送速度不超过接收方接收速率。
+使发送方发送速率不超过接收方接收速率。
 
-接收方和发送方维护对应状态，保证 lastSent-lastAcked&lt;=lastRevd-lastRead=revWindow（接收方窗口大小,ACK 报文会回传）
+通过让发送方维护一个接收窗口的变量，进行流量控制。
 
-## 拥塞控制
+### 机制
+
+假设 RcvBuffer 是接收方的接收缓存，应用缓存从接收缓存中读取数据；`lastByteRead` 是应用程序从缓存中读取最后一个字节的编号，`lastByteRcvd` 是放入接收缓存的最后一个接收到的字节编号。为了避免接收缓存溢出，必须保证：
+
+`lastByteRcvd-lastByteRead<=RcvBuffer`
+
+用 `RcvWindow` 表示接收窗口，则
+
+`RevWindow=RcvBuffer-[lastByteRcvd-lastByteRead]`
+
+即接收方最多还能接收 `RcvWindow` 个字节。
+
+接收方将 `RcvWindow` 放入报文的接收窗口字段中，这样发送方就可以根据这个值来调整发送速率。发送方维护两个变量`lastByteSent`和`lastByteAcked`,而`lastByteSent-lastByteAcked`就是发送方已经发送但是未被接收方确认的数据量。通过保证：
+
+`lastByteSent-lastByteAcked<=RcvWindow`
+
+就能保证发送方的发送速率不超过接收方的接收速率。
+
+### 小问题
+
+当 RcvWindow=0,且接收方没有新的报文发送时，接收方无法得到RcvWindow的后续更新，此时即便接收方接收缓存已经可以继续接收数据，但它无法告诉发送方。因此TCP规定，当发送方接收到RcvWindow=0时，要继续发送只有一个字节数据的报文段，以此获取最新的 `RcvWindow` 值。
+
+## 拥塞控制（Congestion Control）
 
 控制整个网络拥塞情况。
 
