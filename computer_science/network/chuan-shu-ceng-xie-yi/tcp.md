@@ -4,6 +4,10 @@
 
 面向连接、提供可靠的数据传输。
 
+## 报文结构
+
+![TCP &#x62A5;&#x6587;&#x7ED3;&#x6784;](../../../.gitbook/assets/image%20%285%29.png)
+
 ## 建立连接（三次握手）
 
 * 客户端发送SYN报文段，SYN=1,seq=client\_start\_seq（其实序列号），进入 `SYN_SENT` 状态
@@ -48,21 +52,27 @@
 
 ## 拥塞控制（Congestion Control）
 
-控制整个网络拥塞情况。
+控制流向整个整个网络中的数据量，避免拥塞引起丢包。
 
-#### 如何控制发送方
+#### 如何控制
 
-维护拥塞窗口变量CongWin,保证 lastSent-lastAcked&lt;=min\(CongWin,revWindow\)
+遏制发送方，发送方维护拥塞窗口变量 CongWin,保证 ：
+
+```text
+lastByteSent-lastByteAcked<=min(CongWin,revWindow)
+```
+
+通过限制未被确认的数据量，间接的控制了发送方发送的数据量。
 
 #### 如何检测拥塞
 
-超时或者三次冗余ACK（发生了丢包）
+出现超时或者收到接收方的三次冗余ACK（发生了丢包）
 
 #### 避免拥塞策略
 
+* 慢启动：CongWin 初始值为MSS，每过一个RTT\(往返时延\)CongWin翻倍，直到遇见丢包事或超时事件
 * 加性增，乘性减:发生丢包后CongWin减半，以后每收到一个ACk，增加一个MSS\(最大报文段长，由链路层帧长度确定\)
-* 慢启动：CongWin 初始值为MSS，每过一个RTT\(往返时延\)CongWin翻倍，直到遇见丢包事件，进行减半
-* 对超时事件作出响应：超时后直接进入慢启动，三次冗余 CongWin 减半
+* 对超时事件作出响应：超时后直接进入慢启动；三次冗余 CongWin 减半
 
 ## 相关问题
 
