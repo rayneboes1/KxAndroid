@@ -81,9 +81,45 @@ internal fun enqueue(call: AsyncCall) {
 
 先加入到等待队列中，然后通过 promoteAndExecute 方法，将等待队列中可以执行的请求添加到可执行列表中（需要满足限制条件：并发请求数量、相同host并发请求数量、线程数等等），同时添加到执行中列表中，然后通过线程池执行。
 
+### AsyncCall\#run
+
+```text
+//AsyncCall#run
+override fun run() {
+      threadName("OkHttp ${redactedUrl()}") {
+        var signalledCallback = false
+        timeout.enter()
+        try {
+          val response = getResponseWithInterceptorChain()
+          signalledCallback = true
+          responseCallback.onResponse(this@RealCall, response)
+        } catch (e: IOException) {
+          if (signalledCallback) {
+            // Do not signal the callback twice!
+            Platform.get().log("Callback failure for ${toLoggableString()}", Platform.INFO, e)
+          } else {
+            responseCallback.onFailure(this@RealCall, e)
+          }
+        } catch (t: Throwable) {
+          cancel()
+          if (!signalledCallback) {
+            val canceledException = IOException("canceled due to $t")
+            canceledException.addSuppressed(t)
+            responseCallback.onFailure(this@RealCall, canceledException)
+          }
+          throw t
+        } finally {
+          client.dispatcher.finished(this)
+        }
+      }
+    }
+```
+
 
 
 执行请求的方法  RealCall\#getResponseWithInterceptorChain\(\),这个方法中会将用户自定义的拦截器加上已经按职责分离的所有必须拦截器构造一个RealInterceptorChain，然后调用它的proceed 方法处理请求。
+
+### RealCall\#getResponseWithInterceptorChain
 
 ```text
 //RealCall#getResponseWithInterceptorChain()
@@ -134,7 +170,7 @@ internal fun getResponseWithInterceptorChain(): Response {
 
 请求处理使用了连接器链完成-责任链模式。
 
-### proceed
+### RealInterceptorChain\#proceed
 
 ```text
 override fun proceed(request: Request): Response {
