@@ -20,9 +20,13 @@
 
 ## 流量控制
 
-接收方和发送方维护对应状态，保证 lastSent-lastAcked&lt;=lastRevd-lastRead=revWindow
+控制发送方发送速度不超过接收方接收速率。
+
+接收方和发送方维护对应状态，保证 lastSent-lastAcked&lt;=lastRevd-lastRead=revWindow（接收方窗口大小）
 
 ## 拥塞控制
+
+控制整个网络拥塞情况。
 
 #### 如何控制发送方
 
@@ -34,8 +38,8 @@
 
 #### 避免拥塞策略
 
-* 加性增，乘性减:遇见丢包后CongWin减半，以后每收到一个ACk，增加一个MSS\(最大报文段长，由链路层帧长度确定\)
-* 慢启动：CongWin 初始值为MSS，每过一个RTT翻倍，知道遇见丢包事件
+* 加性增，乘性减:发生丢包后CongWin减半，以后每收到一个ACk，增加一个MSS\(最大报文段长，由链路层帧长度确定\)
+* 慢启动：CongWin 初始值为MSS，每过一个RTT\(往返时延\)CongWin翻倍，直到遇见丢包事件，进行减半
 * 对超时事件作出响应：超时后直接进入慢启动，三次冗余 CongWin 减半
 
 ## 相关问题
