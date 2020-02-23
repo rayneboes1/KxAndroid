@@ -114,9 +114,7 @@ override fun proceed(request: Request): Response {
 
 intercept 方法参数为 RealInterceptorChain ，该方法中需要执行 chain.proceed 进行传递。
 
-如果要在响应前执行操作，那么可以放在 chain.proceed 之前；如果要在收到响应后再处理，可以先调用 chain.proceed 获取响应，然后再操作。
-
-真正发送请求的拦截器是CallServerInterceptor，这也是拦截器列表里最后一个拦截器。
+如果要在响应前执行操作，那么可以放在 chain.proceed 之前；如果要在收到响应后再处理，可以先调用 chain.proceed 获取响应，然后再操作.
 
 请求完成后通过 dispatcher.finish方法，将执行完的call移除队列，并在符合条件的情况下执行等待队列中的请求并添加到运行中队列。
 
@@ -262,7 +260,196 @@ override fun intercept(chain: Interceptor.Chain): Response {
   }
 ```
 
+### CallServerInterceptor
 
+真正用于发送请求的拦截器，这也是拦截器列表里最后一个拦截器。
+
+```text
+override fun intercept(chain: Interceptor.Chain): Response {
+    val realChain = chain as RealInterceptorChain
+    val exchange = realChain.exchange!!
+    val request = realChain.request
+    val requestBody = request.body
+    val sentRequestMillis = System.currentTimeMillis()
+
+    exchange.writeRequestHeaders(request)
+
+    var invokeStartEvent = true
+    var responseBuilder: Response.Builder? = null
+    if (HttpMethod.permitsRequestBody(request.method) && requestBody != null) {
+      // If there's a "Expect: 100-continue" header on the request, wait for a "HTTP/1.1 100
+      // Continue" response before transmitting the request body. If we don't get that, return
+      // what we did get (such as a 4xx response) without ever transmitting the request body.
+      if ("100-continue".equals(request.header("Expect"), ignoreCase = true)) {
+        exchange.flushRequest()
+        responseBuilder = exchange.readResponseHeaders(expectContinue = true)
+        exchange.responseHeadersStart()
+        invokeStartEvent = false
+      }
+      if (responseBuilder == null) {
+        if (requestBody.isDuplex()) {
+          // Prepare a duplex body so that the application can send a request body later.
+          exchange.flushRequest()
+          val bufferedRequestBody = exchange.createRequestBody(request, true).buffer()
+          requestBody.writeTo(bufferedRequestBody)
+        } else {
+          // Write the request body if the "Expect: 100-continue" expectation was met.
+          val bufferedRequestBody = exchange.createRequestBody(request, false).buffer()
+          requestBody.writeTo(bufferedRequestBody)
+          bufferedRequestBody.close()
+        }
+      } else {
+        exchange.noRequestBody()
+        if (!exchange.connection.isMultiplexed) {
+          // If the "Expect: 100-continue" expectation wasn't met, prevent the HTTP/1 connection
+          // from being reused. Otherwise we're still obligated to transmit the request body to
+          // leave the connection in a consistent state.
+          exchange.noNewExchangesOnConnection()
+        }
+      }
+    } else {
+      exchange.noRequestBody()
+    }
+
+    if (requestBody == null || !requestBody.isDuplex()) {
+      exchange.finishRequest()
+    }
+    if (responseBuilder == null) {
+      responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
+      if (invokeStartEvent) {
+        exchange.responseHeadersStart()
+        invokeStartEvent = false
+      }
+    }
+    var response = responseBuilder
+        .request(request)
+        .handshake(exchange.connection.handshake())
+        .sentRequestAtMillis(sentRequestMillis)
+        .receivedResponseAtMillis(System.currentTimeMillis())
+        .build()
+    var code = response.code
+    if (code == 100) {
+      // Server sent a 100-continue even though we did not request one. Try again to read the actual
+      // response status.
+      responseBuilder = exchange.readResponseHeaders(expectContinue = false)!!
+      if (invokeStartEvent) {
+        exchange.responseHeadersStart()
+      }
+      response = responseBuilder
+          .request(request)
+          .handshake(exchange.connection.handshake())
+          .sentRequestAtMillis(sentRequestMillis)
+          .receivedResponseAtMillis(System.currentTimeMillis())
+          .build()
+      code = response.code
+    }
+
+    exchange.responseHeadersEnd(response)
+
+    response = if (forWebSocket && code == 101) {
+      // Connection is upgrading, but we need to ensure interceptors see a non-null response body.
+      response.newBuilder()
+          .body(EMPTY_RESPONSE)
+          .build()
+    } else {
+      response.newBuilder()
+          .body(exchange.openResponseBody(response))
+          .build()
+    }
+    if ("close".equals(response.request.header("Connection"), ignoreCase = true) ||
+        "close".equals(response.header("Connection"), ignoreCase = true)) {
+      exchange.noNewExchangesOnConnection()
+    }
+    if ((code == 204 || code == 205) && response.body?.contentLength() ?: -1L > 0L) {
+      throw ProtocolException(
+          "HTTP $code had non-zero Content-Length: ${response.body?.contentLength()}")
+    }
+    return response
+  }
+```
+
+主要借助Exchange来发送请求和读取响应,而 Exchange 又借助 ExchangeCodec 编解码器来进行处理。ExchangeCodec 是一个接口，实现类有 Http1ExchangeCodec 和Http2ExchangeCodec，分别对应HTTP 1.1 和 HTTP 2。
+
+连接的初始化在 ConnectInterceptor 中进行，调用了call.initExchange 方法
+
+```text
+@Throws(IOException::class)
+  override fun intercept(chain: Interceptor.Chain): Response {
+    val realChain = chain as RealInterceptorChain
+    val exchange = realChain.call.initExchange(chain)
+    val connectedChain = realChain.copy(exchange = exchange)
+    return connectedChain.proceed(realChain.request)
+  }
+```
+
+### RealInterceptorChain\#initExchange
+
+```text
+internal fun initExchange(chain: RealInterceptorChain): Exchange {
+    synchronized(connectionPool) {
+      check(!noMoreExchanges) { "released" }
+      check(exchange == null)
+    }
+
+    val codec = exchangeFinder!!.find(client, chain)
+    val result = Exchange(this, eventListener, exchangeFinder!!, codec)
+    this.interceptorScopedExchange = result
+
+    synchronized(connectionPool) {
+      this.exchange = result
+      this.exchangeRequestDone = false
+      this.exchangeResponseDone = false
+      return result
+    }
+  }
+```
+
+### ExchangeFinder\#find
+
+```text
+fun find(
+    client: OkHttpClient,
+    chain: RealInterceptorChain
+  ): ExchangeCodec {
+    try {
+      val resultConnection = findHealthyConnection(
+          connectTimeout = chain.connectTimeoutMillis,
+          readTimeout = chain.readTimeoutMillis,
+          writeTimeout = chain.writeTimeoutMillis,
+          pingIntervalMillis = client.pingIntervalMillis,
+          connectionRetryEnabled = client.retryOnConnectionFailure,
+          doExtensiveHealthChecks = chain.request.method != "GET"
+      )
+      return resultConnection.newCodec(client, chain)
+    } catch (e: RouteException) {
+      trackFailure(e.lastConnectException)
+      throw e
+    } catch (e: IOException) {
+      trackFailure(e)
+      throw RouteException(e)
+    }
+  }
+```
+
+### RealConnection\#newCodec
+
+```text
+internal fun newCodec(client: OkHttpClient, chain: RealInterceptorChain): ExchangeCodec {
+    val socket = this.socket!!
+    val source = this.source!!
+    val sink = this.sink!!
+    val http2Connection = this.http2Connection
+
+    return if (http2Connection != null) {
+      Http2ExchangeCodec(client, this, chain, http2Connection)
+    } else {
+      socket.soTimeout = chain.readTimeoutMillis()
+      source.timeout().timeout(chain.readTimeoutMillis.toLong(), MILLISECONDS)
+      sink.timeout().timeout(chain.writeTimeoutMillis.toLong(), MILLISECONDS)
+      Http1ExchangeCodec(client, this, source, sink)
+    }
+  }
+```
 
 ## 缓存处理
 
