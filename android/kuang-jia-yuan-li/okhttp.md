@@ -1,6 +1,8 @@
-# OkHttp
+---
+description: Version 4.4.0
+---
 
-[彻底理解OkHttp - OkHttp 源码解析及OkHttp的设计思想](https://juejin.im/post/5c1b23b9e51d4529096aaaee) 
+# OkHttp
 
 ## OkHttpClient 创建
 
@@ -178,6 +180,88 @@ val executorService: ExecutorService
 
 ## 请求发送
 
+### BridgeInterceptor
+
+主要是将用户创建的请求调整为HTTP 协议格式，并将原始响应组成成Response。
+
+```text
+override fun intercept(chain: Interceptor.Chain): Response {
+    val userRequest = chain.request()
+    val requestBuilder = userRequest.newBuilder()
+
+    val body = userRequest.body
+    //------------------处理请求--------------
+    if (body != null) {
+      val contentType = body.contentType()
+      if (contentType != null) {
+        requestBuilder.header("Content-Type", contentType.toString())
+      }
+
+      val contentLength = body.contentLength()
+      if (contentLength != -1L) {
+        requestBuilder.header("Content-Length", contentLength.toString())
+        requestBuilder.removeHeader("Transfer-Encoding")
+      } else {
+        requestBuilder.header("Transfer-Encoding", "chunked")
+        requestBuilder.removeHeader("Content-Length")
+      }
+    }
+
+    if (userRequest.header("Host") == null) {
+      requestBuilder.header("Host", userRequest.url.toHostHeader())
+    }
+
+    if (userRequest.header("Connection") == null) {
+      requestBuilder.header("Connection", "Keep-Alive")
+    }
+
+    // If we add an "Accept-Encoding: gzip" header field we're responsible for also decompressing
+    // the transfer stream.
+    var transparentGzip = false
+    if (userRequest.header("Accept-Encoding") == null && userRequest.header("Range") == null) {
+      transparentGzip = true
+      requestBuilder.header("Accept-Encoding", "gzip")
+    }
+
+    val cookies = cookieJar.loadForRequest(userRequest.url)
+    if (cookies.isNotEmpty()) {
+      requestBuilder.header("Cookie", cookieHeader(cookies))
+    }
+
+    if (userRequest.header("User-Agent") == null) {
+      requestBuilder.header("User-Agent", userAgent)
+    }
+    //-----------------处理请求 Done--------------------
+
+    val networkResponse = chain.proceed(requestBuilder.build())
+    
+    //-----------------开始处理响应----------------------
+
+    cookieJar.receiveHeaders(userRequest.url, networkResponse.headers)
+
+    val responseBuilder = networkResponse.newBuilder()
+        .request(userRequest)
+
+    if (transparentGzip &&
+        "gzip".equals(networkResponse.header("Content-Encoding"), ignoreCase = true) &&
+        networkResponse.promisesBody()) {
+      val responseBody = networkResponse.body
+      if (responseBody != null) {
+        val gzipSource = GzipSource(responseBody.source())
+        val strippedHeaders = networkResponse.headers.newBuilder()
+            .removeAll("Content-Encoding")
+            .removeAll("Content-Length")
+            .build()
+        responseBuilder.headers(strippedHeaders)
+        val contentType = networkResponse.header("Content-Type")
+        responseBuilder.body(RealResponseBody(contentType, -1L, gzipSource.buffer()))
+      }
+    }
+
+    return responseBuilder.build()
+  }
+```
+
 
 
 ## 缓存处理
@@ -286,4 +370,10 @@ override fun intercept(chain: Interceptor.Chain): Response {
 3. 网络不可用、缓存可用，返回缓存的响应
 4. 网络可用、发送请求，如果304，返回缓存可用，
 5. 根据最新的响应更新或添加缓存
+
+## 相关链接
+
+[Github](https://github.com/square/okhttp/)
+
+[彻底理解OkHttp - OkHttp 源码解析及OkHttp的设计思想](https://juejin.im/post/5c1b23b9e51d4529096aaaee) 
 
