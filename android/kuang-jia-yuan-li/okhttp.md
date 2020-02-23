@@ -180,7 +180,110 @@ val executorService: ExecutorService
 
 
 
-## 缓存
+## 缓存处理
 
-CacheInterceptor
+默认的缓存逻辑在 CacheInterceptor 中，使用DiskLruCache。
+
+```text
+override fun intercept(chain: Interceptor.Chain): Response {
+    val cacheCandidate = cache?.get(chain.request())
+
+    val now = System.currentTimeMillis()
+
+    val strategy = CacheStrategy.Factory(now, chain.request(), cacheCandidate).compute()
+    val networkRequest = strategy.networkRequest
+    val cacheResponse = strategy.cacheResponse
+
+    cache?.trackResponse(strategy)
+
+    if (cacheCandidate != null && cacheResponse == null) {
+      // The cache candidate wasn't applicable. Close it.
+      cacheCandidate.body?.closeQuietly()
+    }
+
+    // If we're forbidden from using the network and the cache is insufficient, fail.
+    if (networkRequest == null && cacheResponse == null) {
+      return Response.Builder()
+          .request(chain.request())
+          .protocol(Protocol.HTTP_1_1)
+          .code(HTTP_GATEWAY_TIMEOUT)
+          .message("Unsatisfiable Request (only-if-cached)")
+          .body(EMPTY_RESPONSE)
+          .sentRequestAtMillis(-1L)
+          .receivedResponseAtMillis(System.currentTimeMillis())
+          .build()
+    }
+
+    // If we don't need the network, we're done.
+    if (networkRequest == null) {
+      return cacheResponse!!.newBuilder()
+          .cacheResponse(stripBody(cacheResponse))
+          .build()
+    }
+
+    var networkResponse: Response? = null
+    try {
+      networkResponse = chain.proceed(networkRequest)
+    } finally {
+      // If we're crashing on I/O or otherwise, don't leak the cache body.
+      if (networkResponse == null && cacheCandidate != null) {
+        cacheCandidate.body?.closeQuietly()
+      }
+    }
+
+    // If we have a cache response too, then we're doing a conditional get.
+    if (cacheResponse != null) {
+      if (networkResponse?.code == HTTP_NOT_MODIFIED) {
+        val response = cacheResponse.newBuilder()
+            .headers(combine(cacheResponse.headers, networkResponse.headers))
+            .sentRequestAtMillis(networkResponse.sentRequestAtMillis)
+            .receivedResponseAtMillis(networkResponse.receivedResponseAtMillis)
+            .cacheResponse(stripBody(cacheResponse))
+            .networkResponse(stripBody(networkResponse))
+            .build()
+
+        networkResponse.body!!.close()
+
+        // Update the cache after combining headers but before stripping the
+        // Content-Encoding header (as performed by initContentStream()).
+        cache!!.trackConditionalCacheHit()
+        cache.update(cacheResponse, response)
+        return response
+      } else {
+        cacheResponse.body?.closeQuietly()
+      }
+    }
+
+    val response = networkResponse!!.newBuilder()
+        .cacheResponse(stripBody(cacheResponse))
+        .networkResponse(stripBody(networkResponse))
+        .build()
+
+    if (cache != null) {
+      if (response.promisesBody() && CacheStrategy.isCacheable(response, networkRequest)) {
+        // Offer this request to the cache.
+        val cacheRequest = cache.put(response)
+        return cacheWritingResponse(cacheRequest, response)
+      }
+
+      if (HttpMethod.invalidatesCache(networkRequest.method)) {
+        try {
+          cache.remove(networkRequest)
+        } catch (_: IOException) {
+          // The cache cannot be written.
+        }
+      }
+    }
+
+    return response
+  }
+```
+
+主要逻辑：
+
+1. 校验缓存是否可用
+2. 网络不可用、缓存不可用，返回空响应
+3. 网络不可用、缓存可用，返回缓存的响应
+4. 网络可用、发送请求，如果304，返回缓存可用，
+5. 根据最新的响应更新或添加缓存
 
