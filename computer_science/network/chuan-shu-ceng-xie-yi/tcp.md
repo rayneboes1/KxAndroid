@@ -22,7 +22,7 @@
 
 控制发送方发送速度不超过接收方接收速率。
 
-接收方和发送方维护对应状态，保证 lastSent-lastAcked&lt;=lastRevd-lastRead=revWindow（接收方窗口大小）
+接收方和发送方维护对应状态，保证 lastSent-lastAcked&lt;=lastRevd-lastRead=revWindow（接收方窗口大小,ACK 报文会回传）
 
 ## 拥塞控制
 
