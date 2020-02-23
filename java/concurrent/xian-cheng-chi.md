@@ -31,9 +31,6 @@ public ThreadPoolExecutor(
         this.threadFactory = threadFactory;
         this.handler = handler;
 }
-
-
-
 ```
 
 ## 拒绝策略
