@@ -41,6 +41,7 @@ internal fun getResponseWithInterceptorChain(): Response {
     if (!forWebSocket) {
       interceptors += client.networkInterceptors
     }
+    //添加用于发送请求的拦截器
     interceptors += CallServerInterceptor(forWebSocket)
 
     val chain = RealInterceptorChain(
