@@ -1,12 +1,10 @@
-# LinkedHashMap
+# LinkedHashMap 源码
 
 LinkedHashMap 是一个哈希表，拥有可预测的迭代顺序。与 HashMap 不同点在于使用了一个双向链表来维护所有的 Entry，双向链表定义了哈希表的迭代顺序。
 
 ## 一个参数
 
-LinkedHashMap 的迭代顺序有两种：节点插入顺序和节点访问循序。可通过在构造方法中传递 `boolean accessOrder`来指定。
-
-当 `accessOrder` 为 false 时，迭代顺序为节点插入顺序；当 `accessOrder` 为 true 时，迭代顺序为节点访问顺序。
+LinkedHashMap 的迭代顺序有两种：节点插入顺序和节点访问顺序。可通过在构造方法中传递 `boolean accessOrder`来指定——当 `accessOrder` 为 false 时，迭代顺序为节点插入顺序；当 `accessOrder` 为 true 时，迭代顺序为节点访问顺序。
 
 ## 节点类型
 
@@ -124,7 +122,7 @@ void afterNodeInsertion(boolean evict) { // possibly remove eldest
 
 `evict` 标识 HashMap 是否处于创建中，evict 为 `false` 的情况主要包括在构造方法中、`clone`、`readFromObject`等方法中调用 put 相关操作时，其他情况一律为 `true`。
 
-可以看出 `afterNodeInsertion` 主要是根据需要移除头结点，然后在移除后会有调整顺序的操作，不过已经是在`afterNodeRemoval`方法中了。 \(`removeNode` 会调用 `afterNodeRemoval`\)
+可以看出 `afterNodeInsertion` 主要是根据需要\(removeEldestEntry 方法返回值\)移除头结点，然后在移除后会有调整顺序的操作，不过已经是在`afterNodeRemoval`方法中了。 \(`removeNode` 会调用 `afterNodeRemoval`\)
 
 ### `afterNodeRemoval`
 
