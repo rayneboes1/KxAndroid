@@ -8,27 +8,85 @@ description: Version 4.4.0
 
 可以通过建造者模式进行参数设定，会初始化调度器Dispatcher。
 
-OkHttpClient 的创建、
-
-
-
 ## 请求创建
 
 请求的创建等都使用了建造者模式。
 
 ## 异步请求
 
-请求真正的执行时RealCall类，同步请求使用execute，异步请求使用enqueue
+请求真正的执行时RealCall类，同步请求使用execute，异步请求使用enqueue。
 
-Realcal\#enqueue 调用了 client.dispatcher\#enqueue\(AsyncCall\)
+Realcall\#enqueue 调用了 client.dispatcher\#enqueue\(AsyncCall\)
 
-入队时会有条件判断（并发请求数量、相同host并发请求数量、线程数等等），满足条件请求被放入执行队列中，通过通过线程池发送队列中的请求；否则加入到等待队列中。
+```text
+// RealCall#enqueue
+override fun enqueue(responseCallback: Callback) {
+    synchronized(this) {
+      check(!executed) { "Already Executed" }
+      executed = true
+    }
+    callStart()
+    client.dispatcher.enqueue(AsyncCall(responseCallback))
+  }
+```
+
+```text
+//Dispatcher#enqueue
+internal fun enqueue(call: AsyncCall) {
+    synchronized(this) {
+      //添加到等待队列
+      readyAsyncCalls.add(call)
+
+      // Mutate the AsyncCall so that it shares the AtomicInteger of an existing running call to
+      // the same host.
+      if (!call.call.forWebSocket) {
+        val existingCall = findExistingCallWithHost(call.host)
+        if (existingCall != null) call.reuseCallsPerHostFrom(existingCall)
+      }
+    }
+    promoteAndExecute()
+  }
+  
+  
+  private fun promoteAndExecute(): Boolean {
+    this.assertThreadDoesntHoldLock()
+
+    val executableCalls = mutableListOf<AsyncCall>()
+    val isRunning: Boolean
+    synchronized(this) {
+      val i = readyAsyncCalls.iterator()
+      //将等待中的请求放入可执行队列
+      while (i.hasNext()) {
+        val asyncCall = i.next()
+
+        if (runningAsyncCalls.size >= this.maxRequests) break // Max capacity.
+        if (asyncCall.callsPerHost.get() >= this.maxRequestsPerHost) continue // Host max capacity.
+
+        i.remove()
+        asyncCall.callsPerHost.incrementAndGet()
+        executableCalls.add(asyncCall)
+        runningAsyncCalls.add(asyncCall)
+      }
+      isRunning = runningCallsCount() > 0
+    }
+   //将可执行请求放入线程池
+    for (i in 0 until executableCalls.size) {
+      val asyncCall = executableCalls[i]
+      asyncCall.executeOn(executorService)
+    }
+
+    return isRunning
+  }
+```
+
+先加入到等待队列中，然后通过 promoteAndExecute 方法，将等待队列中可以执行的请求添加到可执行列表中（需要满足限制条件：并发请求数量、相同host并发请求数量、线程数等等），同时添加到执行中列表中，然后通过线程池执行。
 
 
 
 执行请求的方法  RealCall\#getResponseWithInterceptorChain\(\),这个方法中会将用户自定义的拦截器加上已经按职责分离的所有必须拦截器构造一个RealInterceptorChain，然后调用它的proceed 方法处理请求。
 
 ```text
+//RealCall#getResponseWithInterceptorChain()
 internal fun getResponseWithInterceptorChain(): Response {
     // Build a full stack of interceptors.
     val interceptors = mutableListOf<Interceptor>()
