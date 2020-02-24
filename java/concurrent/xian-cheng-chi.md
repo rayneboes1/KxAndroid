@@ -137,3 +137,9 @@ JDK 提供
     }
 ```
 
+## 相关链接
+
+[22 \| Executor与线程池：如何创建正确的线程池？-极客时间](https://time.geekbang.org/column/article/90771)
+
+
+
