@@ -243,6 +243,31 @@ Looper 线程的等待和唤醒是在 native 层通过**管道**实现的。
 
 当通过 MessageQueue 的 enqueueMessage 插入消息时，如果此时线程处于空闲等待中，则会进行唤醒。唤醒通过 Native 的 Looper 的 wake 方法，向管道中写入一个“W”字符，此时正在等待的线程就回被唤醒，nativeOncePoll 方法返回，程序开始检查消息队列中的消息决定是否处理。
 
+
+
+## IdleHanlder
+
+```text
+/**
+* Callback interface for discovering when a thread is going to block
+* waiting for more messages.
+*/
+public static interface IdleHandler {
+    /**
+     * Called when the message queue has run out of messages and will now
+     * wait for more.  Return true to keep your idle handler active, false
+     * to have it removed.  This may be called if there are still messages
+     * pending in the queue, but they are all scheduled to be dispatched
+     * after the current time.
+     */
+    boolean queueIdle();
+}
+```
+
+调用MessageQueue\#next\(\) 方法且第一次循环消息队列为空或者有消息但是时间没到时执行。
+
+
+
 ## 相关问题
 
 ### 为什么系统不建议在子线程访问UI？
