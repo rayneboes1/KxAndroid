@@ -24,7 +24,7 @@ Android 消息循环主要涉及Looper、Handler、MessageQueue和Message 四个
 
 消息循环的入口，提供 `Looper.prepare()` 用于创建 `Looper` 线程，以及 `Looper.loop()`方法进入消息循环，持有 MessageQueue 的引用。
 
-Looper.prepare\(\) 方法用于给当前线程设置Looper,通过 ThreadLocal 将当前线程和它的 Looper 进行绑定。每个线程只能有一个Looper。
+Looper.prepare\(\) 方法用于给当前线程设置Looper,通过 [ThreadLocal](../../java/concurrent/threadlocal.md) 将当前线程和它的 Looper 进行绑定，每个线程只能有一个Looper。
 
 `Looper.loop()` 方法就是通过 `MessageQueue`的`next()`方法获取下一条待处理消息，然后通知消息的 `Handler` 处理消息。
 
@@ -189,7 +189,7 @@ int Looper::pollOnce(int timeoutMillis, int* outFd, int* outEvents, void** outDa
 
 pollOnce 主要通过 pollInner 的返回值来判断是否需要返回。pollInner 方法通过 **epoll\_wait** 来检查管道是否有写入事件，如果有或者等待超时，那么就会返回；**否则就会在epoll\_wait中进入睡眠。**
 
-如果 epoll\_wait 返回值是 0，即等待超时；如果大于0，则说明有写入事件发生，这时会清空管道内容并返回。
+如果 epoll\_wait 返回值是 0，即**等待超时**；如果大于0，则说明有写入事件发生，这时会清空管道内容并返回。
 
 ### MessageQueue 的 enqueueMessage
 
@@ -229,13 +229,13 @@ final boolean enqueueMessage(Message msg, long when) {
 原文链接：https://blog.csdn.net/luoshengyang/article/details/6817933
 ```
 
-在将消息放入消息队列后，根据情况判断是否需要唤醒。如果消息队列不为空，那么就不需要唤醒；如果消息队列为空，那么此时线程还在epoll\_wait上空闲等待，就需要进行唤醒。
+在将消息放入消息队列后，根据情况判断是否需要唤醒。如果消息队列不为空，那么就不需要唤醒；**如果消息队列为空，那么此时线程还在epoll\_wait上空闲等待，就需要进行唤醒**。
 
-唤醒调用了native方法 nativeWake，这个调用NativeMessageQueue的wake方法，进而调用Native 层Looper 的wake方法。Native Looper 的wake 就是往管道中写入一个"W"字符串，这时在管道读的一端 epoll\_wait 上等待的线程就回被唤醒，从而在Java 层MessageQueue 的next方法中调用的 `nativePollOnce`返回，此时消息队列中已经放入了新的消息，程序就会拿到消息队列的消息进行处理或等待。
+唤醒调用了native方法 nativeWake，这个调用NativeMessageQueue的wake方法，进而调用Native 层Looper 的wake方法。Native Looper 的wake 就是往管道中写入一个"W"字符串，这时在管道读的一端 epoll\_wait 上等待的线程就会被唤醒，从而在Java 层MessageQueue 的next方法中调用的 `nativePollOnce`返回，此时消息队列中已经放入了新的消息，程序就会拿到消息队列的消息进行处理或等待。
 
 ### 总结
 
-Looper 线程的等待和唤醒是在 native 层通过管道实现的。
+Looper 线程的等待和唤醒是在 native 层通过**管道**实现的。
 
 在创建 MessageQueue 的时候在 Native 层也创建了对应的 NativeMessageQueue 和  Looper。NativeMessageQueue 主要用于Java 层的 MessageQueue 调用，保存在它的 mPtr 变量中。而 Native 的 Looper 则是基于管道和 epoll 机制来实现等待和唤醒的。 
 
