@@ -6,7 +6,7 @@
 | :---: | :--- |
 | standard | 默认启动模式，每次启动都会创建新的Activity实例，并放到栈顶 |
 | singleTop | 栈顶复用，如果要启动的Activity在栈顶已经有实例，则复用这个实例并调用 onNewIntent方法 |
-| singleTask | 栈内复用，如果Activity再所指定的任务栈\(可在清单文件中通过 taskAffinity 指定\)中已经有实例，则复用这个实例，并将此实例上面的Activity全部出栈，即使此Activity处于栈顶 |
+| singleTask | 栈内复用，如果Activity再所指定的任务栈\(可在清单文件中通过 taskAffinity 指定\)中已经有实例，则复用这个实例，并将此实例上面的Activity全部出栈，将此Activity置于栈顶 |
 | singleInstance | 单例复用，只会创建一次，并且Activity实例处于单独的任务栈中，且是任务栈中唯一的 Activity。 |
 
 ## 谈谈 `singleTop` 和 `singleTask` 的区别以及应用场景
@@ -40,7 +40,9 @@ Activity 实例复用时调用。
 * FLAG\_ACTIVITY\_NO\_ANIMATION：不使用动画
 * ....
 
-通过Intent 设置的启动模式标记位优先于清单中设置的标记位。
+**通过Intent 设置的启动模式标记位优先于清单中设置的标记位。**
+
+## 相关链接
 
 [官方文档](https://developer.android.google.cn/guide/components/activities/tasks-and-back-stack)
 
