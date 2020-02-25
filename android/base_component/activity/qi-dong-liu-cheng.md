@@ -311,8 +311,6 @@ final void handleResumeActivity() {
 }
 ```
 
-> resume 之后才开始添加View
-
 ```text
 public final ActivityClientRecord performResumeActivity() {
  	if (r != null && !r.activity.mFinished) {
