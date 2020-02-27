@@ -1,9 +1,11 @@
 # App 启动流程
 
+
+
 当点击`桌面App`的时候，发起进程就是`Launcher`所在的进程，启动远程进程，利用`Binder`发送消息给`system_server进程`；
 
   
-在`system_server进程`中启动了N多服务，例如`ActiivityManagerService，WindowManagerService`等。启动进程的操作会先调用`AMS.startProcessLocked`方法，内部调用 `Process.start(android.app.ActivityThread);`而后通过`socket`通信告知`Zygote进程fork子进程`，即app进程。进程创建后将`ActivityThread`加载进去，执行`ActivityThread.main()`方法。
+在`system_server进程`中启动了N多服务，例如`ActivityManagerService，WindowManagerService`等。启动进程的操作会先调用`AMS.startProcessLocked`方法，内部调用 `Process.start(android.app.ActivityThread);`而后通过`socket`通信告知`Zygote进程fork子进程`，即app进程。进程创建后将`ActivityThread`加载进去，执行`ActivityThread.main()`方法。
 
   
 在`app进程`中，`main方法`会实例化`ActivityThread`，同时创建`ApplicationThread，Looper，Hander对象`，调用`attach方法`进行`Binder`通信，`looper`启动循环。`attach`方法内部获取`ActivityManagerProxy`对象，其实现了`IActivityManager`接口，作为客户端调用`attachApplication(mAppThread)`方法，将`thread`信息告知`AMS`。
@@ -27,4 +29,12 @@
 5. Activity main\(\)
 6. ActivityThread 进程loop循环
 7. 开启Activity,开始生命周期回调…
+
+## 相关链接
+
+[理解Android进程创建流程](http://gityuan.com/2016/03/26/app-process-create/)
+
+[Android四大组件与进程启动的关系](http://gityuan.com/2016/10/09/app-process-create-2/)
+
+[startActivity启动过程分析](http://gityuan.com/2016/03/12/start-activity/)
 
