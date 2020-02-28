@@ -61,6 +61,7 @@
 * [软件工程](software_engineering/README.md)
   * [编程思想](software_engineering/bian-cheng-si-xiang.md)
   * [设计模式](software_engineering/design_pattern/README.md)
+    * [代理模式](software_engineering/design_pattern/dai-li-mo-shi.md)
     * [责任链模式](software_engineering/design_pattern/ze-ren-lian-mo-shi.md)
     * [建造者模式](software_engineering/design_pattern/jian-zao-zhe-mo-shi.md)
     * [单例模式](software_engineering/design_pattern/dan-li-mo-shi.md)
