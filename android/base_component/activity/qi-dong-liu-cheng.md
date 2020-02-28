@@ -311,6 +311,8 @@ final void handleResumeActivity() {
 }
 ```
 
+> resume 之后才开始添加View
+
 ```text
 public final ActivityClientRecord performResumeActivity() {
  	if (r != null && !r.activity.mFinished) {
@@ -408,7 +410,7 @@ public void callActivityOnRestart() {
 }
 ```
 
-![Activity &#x542F;&#x52A8;&#x6D41;&#x7A0B;](../../../.gitbook/assets/image%20%2830%29.png)
+![Activity &#x542F;&#x52A8;&#x6D41;&#x7A0B;](../../../.gitbook/assets/image%20%2832%29.png)
 
 ## 参考
 

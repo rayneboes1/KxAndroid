@@ -16,7 +16,7 @@ DNS 服务器组织成层级结构：
 
 ## 查询
 
-![DNS  &#x67E5;&#x8BE2;&#x8FC7;&#x7A0B;](../../../.gitbook/assets/image%20%2831%29.png)
+![DNS  &#x67E5;&#x8BE2;&#x8FC7;&#x7A0B;](../../../.gitbook/assets/image%20%2833%29.png)
 
 存在递归和迭代过程，上图中客户端到本地DNS服务器是递归 ，其他是迭代。
 

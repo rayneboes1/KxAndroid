@@ -1,6 +1,6 @@
 # APK 打包流程
 
-![APK &#x6784;&#x5EFA;&#x6D41;&#x7A0B;&#x56FE;](../../.gitbook/assets/image%20%2825%29.png)
+![APK &#x6784;&#x5EFA;&#x6D41;&#x7A0B;&#x56FE;](../../.gitbook/assets/image%20%2827%29.png)
 
 1. 编译器将您的源代码、三方库代码转换成 DEX 文件（Dalvik 可执行文件，其中包括在 Android 设备上运行的字节码），并将其他所有内容转换成编译后的资源。
 2. APK 打包器将 DEX 文件和编译后的资源合并到一个 APK 中。不过，在将应用安装并部署到 Android 设备之前，必须先为 APK 签名。
@@ -14,7 +14,7 @@
 * 如果您使用的是 [apksigner](https://developer.android.com/studio/command-line/apksigner.html)，则只能在为 APK 文件签名**之前**执行 zipalign。如果您在使用 apksigner 为 APK 签名之后对 APK 做出了进一步更改，签名便会失效。
 * 如果您使用的是 [jarsigner](https://docs.oracle.com/javase/tutorial/deployment/jar/signing.html)，则只能在为 APK 文件签名**之后**执行 zipalign。
 
-![Apk &#x8BE6;&#x7EC6;&#x6784;&#x5EFA;&#x6D41;&#x7A0B;](../../.gitbook/assets/image%20%2833%29.png)
+![Apk &#x8BE6;&#x7EC6;&#x6784;&#x5EFA;&#x6D41;&#x7A0B;](../../.gitbook/assets/image%20%2835%29.png)
 
 
 
