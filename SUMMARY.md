@@ -115,6 +115,7 @@
     * [Window](android/nei-bu-yuan-li/window.md)
     * [SparseArray](android/nei-bu-yuan-li/sparsearray.md)
     * [ArrayMap](android/nei-bu-yuan-li/arraymap.md)
+    * [RecyclerView](android/nei-bu-yuan-li/recyclerview.md)
     * [App 启动流程](android/nei-bu-yuan-li/app-qi-dong-liu-cheng.md)
   * [性能优化](android/performan_optimize/README.md)
     * [内存泄漏](android/performan_optimize/nei-cun-xie-lou.md)
