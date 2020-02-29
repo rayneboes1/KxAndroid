@@ -1,6 +1,45 @@
 # 事件分发
 
-## Activity/Window/DecorView
+## ViewRootImpl/DecorView/Activity/Window/DecorView
+
+事件由 ViewRootImpl 分发，会先分发到 DecorView。
+
+```text
+//ViewRootImpl.java
+private int processPointerEvent(QueuedInputEvent q) {
+            final MotionEvent event = (MotionEvent)q.mEvent;
+            ...
+            //关键点：mView分发Touch事件，mView就是DecorView
+            boolean handled = mView.dispatchPointerEvent(event);
+            maybeUpdatePointerIcon(event);
+            maybeUpdateTooltip(event);
+            ...
+       }
+```
+
+```text
+ // View.java
+ public final boolean dispatchPointerEvent(MotionEvent event) {
+        if (event.isTouchEvent()) {
+            //分发Touch事件
+            return dispatchTouchEvent(event);
+        } else {
+            return dispatchGenericMotionEvent(event);
+        }
+    }
+```
+
+```text
+//FrameLayout
+@Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        final Window.Callback cb = mWindow.getCallback();
+        return cb != null && !mWindow.isDestroyed() && mFeatureId < 0
+                ? cb.dispatchTouchEvent(ev) : super.dispatchTouchEvent(ev);
+    }
+```
+
+`Window.Callback`都被Activity和Dialog实现，所以变量cb可能就是Activity和Dialog。
 
 ### Activity
 
@@ -245,7 +284,9 @@ onTouchEvent\(event\) 中会调用onClick 和 onLongClick。
 
 ## 多点触控
 
-处理POINTER\_DOWN 和POINTER\_UP，进行指针处理
+处理POINTER\_DOWN 和POINTER\_UP，进行指针处理。
+
+区分 actionIndex pointerIndex pointerId.
 
 ##  滑动冲突
 
@@ -311,4 +352,14 @@ public boolean dispatchTouchEvent(MotionEvent event) {
     return super.dispatchTouchEvent(event);
 }
 ```
+
+## 相关链接
+
+[玩安卓\|每日一问 ](https://www.wanandroid.com/wenda/show/11287)
+
+[玩安卓\|每日一问：多指触控](https://www.wanandroid.com/wenda/show/10049)
+
+
+
+
 
