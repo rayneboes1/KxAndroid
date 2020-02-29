@@ -10,9 +10,13 @@
 
 ## JIT 编译技术
 
+jit 相当于是给代码加了缓存，对于频繁运行的代码（hot code），将编译结果保存起来，下次执行时不用在做解释或编译，直接运行机器码即可。
+
 [深入浅出 JIT 编译器](https://www.ibm.com/developerworks/cn/java/j-lo-just-in-time/index.html)
 
 ## AOT 编译技术
+
+在应用安装时就编译成机器码。
 
 
 
