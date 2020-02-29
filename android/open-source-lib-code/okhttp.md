@@ -659,3 +659,5 @@ override fun intercept(chain: Interceptor.Chain): Response {
 
 [彻底理解OkHttp - OkHttp 源码解析及OkHttp的设计思想](https://juejin.im/post/5c1b23b9e51d4529096aaaee) 
 
+[OkHttp必须弄清楚的几个原理性问题](https://juejin.im/post/5e185d3c6fb9a02ff254a44c)
+
