@@ -14,7 +14,7 @@
 * 如果您使用的是 [apksigner](https://developer.android.com/studio/command-line/apksigner.html)，则只能在为 APK 文件签名**之前**执行 zipalign。如果您在使用 apksigner 为 APK 签名之后对 APK 做出了进一步更改，签名便会失效。
 * 如果您使用的是 [jarsigner](https://docs.oracle.com/javase/tutorial/deployment/jar/signing.html)，则只能在为 APK 文件签名**之后**执行 zipalign。
 
-![Apk &#x8BE6;&#x7EC6;&#x6784;&#x5EFA;&#x6D41;&#x7A0B;](../../.gitbook/assets/image%20%2836%29.png)
+![Apk &#x8BE6;&#x7EC6;&#x6784;&#x5EFA;&#x6D41;&#x7A0B;](../../.gitbook/assets/image%20%2837%29.png)
 
 
 

@@ -103,7 +103,7 @@ public void dispatchMessage(Message msg) {
 
 ### 各个类和方法调用关系图
 
-![&#x6D88;&#x606F;&#x5FAA;&#x73AF;&#x6D89;&#x53CA;&#x7684;&#x7C7B;&#x548C;&#x65B9;&#x6CD5;&#x4EE5;&#x53CA;&#x8C03;&#x7528;&#x5173;&#x7CFB;](../../.gitbook/assets/image%20%2832%29.png)
+![&#x6D88;&#x606F;&#x5FAA;&#x73AF;&#x6D89;&#x53CA;&#x7684;&#x7C7B;&#x548C;&#x65B9;&#x6CD5;&#x4EE5;&#x53CA;&#x8C03;&#x7528;&#x5173;&#x7CFB;](../../.gitbook/assets/image%20%2833%29.png)
 
 ## 主线程 Looper 设置
 

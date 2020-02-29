@@ -67,6 +67,7 @@
     * [责任链模式](software_engineering/design_pattern/ze-ren-lian-mo-shi.md)
     * [建造者模式](software_engineering/design_pattern/jian-zao-zhe-mo-shi.md)
     * [单例模式](software_engineering/design_pattern/dan-li-mo-shi.md)
+    * [观察者模式](software_engineering/design_pattern/guan-cha-zhe-mo-shi.md)
 * [Java](java/README.md)
   * [基础](java/base.md)
   * [异常](java/exception.md)
