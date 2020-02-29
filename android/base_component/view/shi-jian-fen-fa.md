@@ -286,7 +286,7 @@ onTouchEvent\(event\) 中会调用onClick 和 onLongClick。
 
 处理POINTER\_DOWN 和POINTER\_UP，进行指针处理。
 
-区分 actionIndex pointerIndex pointerId.
+区分 actionIndex\(pointerIndex\)/ pointerId.
 
 ##  滑动冲突
 
@@ -355,9 +355,13 @@ public boolean dispatchTouchEvent(MotionEvent event) {
 
 ## 相关链接
 
+[安卓自定义View进阶-MotionEvent详解](https://www.gcssloop.com/customview/motionevent)
+
 [玩安卓\|每日一问 ](https://www.wanandroid.com/wenda/show/11287)
 
 [玩安卓\|每日一问：多指触控](https://www.wanandroid.com/wenda/show/10049)
+
+[安卓自定义View进阶-多点触控详解](https://www.gcssloop.com/customview/multi-touch)
 
 
 
