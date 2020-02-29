@@ -22,5 +22,7 @@
 
 [实现 ART 即时 \(JIT\) 编译器](https://source.android.com/devices/tech/dalvik/jit-compiler)
 
+[安卓7.0为什么这么快](https://www.jianshu.com/p/9a3a4eb32a04)
+
 
 
