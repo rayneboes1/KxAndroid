@@ -415,7 +415,7 @@ public void apply() {
             @Override
             public void run() {
                 try {
-                    //等待确保写入被执行
+                    //等待,确保写入被执行
                     mcr.writtenToDiskLatch.await();
                 } catch (InterruptedException ignored) {
                 
@@ -445,6 +445,8 @@ apply 逻辑是：
 1. 通过 commitToMemory 方法把修改提交至内存中
 2. 通过 enqueueDiskWrite 将磁盘写入任务提交至任务队列
 3. 通知监听者
+
+> awaitCommit 可能在文件写入时被执行，也可能会在QueuedWork执行完所有任务后再执行。如果通过文件写入过程执行，会从QueuedWork的finisher中把它移除。
 
 ### EditorImpl\#commitToMemory\(\)
 
@@ -747,7 +749,7 @@ private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
 }
 ```
 
-在写入前，会先比较当前磁盘版本好与内存版本号，只有磁盘版本号小于内存版本号时，才会执行文件写入。
+在写入前，会先比较当前磁盘版本号与内存版本号，只有磁盘版本号小于内存版本号时，才会执行文件写入。
 
 另外，对于 apply ，会将每次 mcr 的版本号与当前内存的最终版本号进行对比，只有相等时才会执行文件写入。这样一来，如果短时间内有多次 apply 文件写入请求，只有最后一次写入会被真正执行。
 
@@ -912,12 +914,7 @@ private static final LinkedList<Runnable> sWork = new LinkedList<>();
 //是否允许延迟
 private static boolean sCanDelay = true;
 
-    
-    
-
- 
-    
-    
+  
 public static void addFinisher(Runnable finisher) {
     synchronized (sLock) {
         sFinishers.add(finisher);
@@ -953,7 +950,7 @@ public static void queue(Runnable work, boolean shouldDelay) {
 QueuedWork.queue(writeToDiskRunnable, !isFromSyncCommit);
 ```
 
-也就是说，对于 commit ，shouldDelay 为 false；对于 apply ，shouldDelay 为true。shouldDelay 决定了在通过 handler 发送消息时是否启用延时。
+也就是说，**对于 commit ，shouldDelay 为 false；对于 apply ，shouldDelay 为true**。shouldDelay 决定了在通过 handler 发送消息时是否启用延时。
 
 那为什么要 apply 进行延时呢？ 
 
@@ -995,7 +992,7 @@ private static Handler getHandler() {
 }
 ```
 
-可以看到，初始化时，新建了一个 HanlderThread ，并基于它创建了一个 QueuedWorkHandler 赋值给 sHandler。
+可以看到，初始化时，新建了一个 `HanlderThread` ，并基于它创建了一个 QueuedWorkHandler 赋值给 sHandler。
 
 ### QueuedWorkHandler
 
