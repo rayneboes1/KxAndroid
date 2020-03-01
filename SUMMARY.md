@@ -75,6 +75,7 @@
     * [ThreadLocal](java/concurrent/threadlocal.md)
     * [线程池](java/concurrent/xian-cheng-chi.md)
     * [理解 volatile](java/concurrent/understanding_volatile.md)
+    * [AbstractQueuedSynchronizer](java/concurrent/abstractqueuedsynchronizer.md)
   * [集合](java/collection/README.md)
     * [LinkedHashMap 源码](java/collection/linkedhashmap.md)
     * [HashMap 源码](java/collection/hashmap.md)
