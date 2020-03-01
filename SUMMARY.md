@@ -145,6 +145,7 @@
   * [黑科技](android/hei-ke-ji/README.md)
     * [热修复](android/hei-ke-ji/re-xiu-fu.md)
   * [Jetpack](android/jetpack/README.md)
+    * [Room](android/jetpack/room.md)
     * [WorkManager](android/jetpack/workmanager.md)
   * [新动态](android/ge-ban-ben-zhu-yao-te-xing/README.md)
     * [AndroidX](android/ge-ban-ben-zhu-yao-te-xing/androidx.md)
