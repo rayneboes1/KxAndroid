@@ -1099,13 +1099,105 @@ public static void waitToFinish() {
 
 waitToFinish 会在当前线程立刻执行所有待执行的任务，任务执行完后会一并执行所有 finisher 来通知任务执行完成。
 
-而通过方法的注释可以看出，这个方法主要在 Activity的onPause 方法中、BroadcastReceiver 的 onReceive 方法后、以及Service 的 onCommand 后，以确保所有任务都被执行没有丢失，但这回导致在主线程执行文件写入，是有可能造成性能问题的。
+而通过方法的注释可以看出，这个方法主要在 Activity的onPause 方法中、BroadcastReceiver 的 onReceive 方法后、以及Service 的 onCommand 后调用（具体见下面代码），以确保所有任务都被执行没有丢失，但这回导致在主线程执行文件写入，是有可能造成性能问题的。
 
+```text
+//Service 启动
+private void handleServiceArgs(ServiceArgsData data) {
+        Service s = mServices.get(data.token);
+        if (s != null) {
+            try {
+                if (data.args != null) {
+                    data.args.setExtrasClassLoader(s.getClassLoader());
+                    data.args.prepareToEnterProcess();
+                }
+                int res;
+                if (!data.taskRemoved) {
+                    //调用Service的 onStartCommand
+                    res = s.onStartCommand(data.args, data.flags, data.startId);
+                } else {
+                    s.onTaskRemoved(data.args);
+                    res = Service.START_TASK_REMOVED_COMPLETE;
+                }
 
+                QueuedWork.waitToFinish();
+                
+                //.....
+            }
+        }
+    }
+```
 
-* [ ] 见 ActivityThread
+```text
+//service stop
+private void handleStopService(IBinder token) {
+        Service s = mServices.remove(token);
+        if (s != null) {
+            try {
+                //调用Service的onDestroy方法
+                s.onDestroy();
+                s.detachAndCleanUp();
+                //.....
+                
+                QueuedWork.waitToFinish();
 
+                //....
+            } catch (Exception e) {
+                if (!mInstrumentation.onException(s, e)) {
+                    throw new RuntimeException(
+                            "Unable to stop service " + s
+                            + ": " + e.toString(), e);
+                }
+                Slog.i(TAG, "handleStopService: exception for " + token, e);
+            }
+        } 
+    }
+```
 
+```text
+//在 Android 11 之前，在 onPause调用后执行 QueuedWork.waitToFinish();
+@Override
+    public void handlePauseActivity(IBinder token, boolean finished, boolean userLeaving,
+            int configChanges, PendingTransactionActions pendingActions, String reason) {
+        ActivityClientRecord r = mActivities.get(token);
+        if (r != null) {
+            if (userLeaving) {
+                performUserLeavingActivity(r);
+            }
+
+            r.activity.mConfigChangeFlags |= configChanges;
+            performPauseActivity(r, finished, reason, pendingActions);
+
+            // Make sure any pending writes are now committed.
+            if (r.isPreHoneycomb()) {
+                QueuedWork.waitToFinish();
+            }
+            mSomeActivitiesChanged = true;
+        }
+    }
+```
+
+```text
+//在Android 11之后，在onStop 后调用
+public void handleStopActivity(IBinder token, boolean show, int configChanges,
+            PendingTransactionActions pendingActions, boolean finalStateRequest, String reason) {
+        final ActivityClientRecord r = mActivities.get(token);
+        r.activity.mConfigChangeFlags |= configChanges;
+
+        final StopInfo stopInfo = new StopInfo();
+        performStopActivityInner(r, stopInfo, show, true /* saveState */, finalStateRequest,
+                reason);
+
+        //...
+
+        // Make sure any pending writes are now committed.
+        if (!r.isPreHoneycomb()) {
+            QueuedWork.waitToFinish();
+        }
+        
+        //...
+}
+```
 
 commit 和 apply 区别（为什么推荐用 apply）？
 
