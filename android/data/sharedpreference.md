@@ -1201,7 +1201,7 @@ public void handleStopActivity(IBinder token, boolean show, int configChanges,
 
 commit 和 apply 区别（为什么推荐用 apply）？
 
-commit 有可能会在主线程写入文件，并且没有针对短时间内频繁更新做优化，有可能导致每次操作都在主线程写入。
+commit 会等待文件写入完成，并且有可能会在主线程写入文件，并且没有针对短时间内频繁更新做优化，有可能导致每次操作都在主线程写入。
 
 apply 如果短时间内\(100ms\)有多次提交，只有最后一次会执行文件写入。并且是在单独的线程里执行写入，不会影响性能。
 
