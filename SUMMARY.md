@@ -104,6 +104,7 @@
       * [自定义 View](android/base_component/view/zi-ding-yi-view.md)
       * [Window](android/base_component/view/window.md)
   * [数据存储](android/data/README.md)
+    * [序列化](android/data/xu-lie-hua.md)
     * [SharedPreference](android/data/sharedpreference.md)
   * [资源](android/zi-yuan/README.md)
     * [图片加载](android/zi-yuan/tu-pian-jia-zai.md)
