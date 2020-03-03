@@ -12,6 +12,8 @@
       * [特殊排序](computer_science/algorithm/sort/te-shu-pai-xu.md)
     * [海量数据](computer_science/algorithm/hai-liang-shu-ju.md)
     * [思想](computer_science/algorithm/method/README.md)
+      * [贪心](computer_science/algorithm/method/tan-xin.md)
+      * [分治](computer_science/algorithm/method/fen-zhi.md)
       * [动态规划](computer_science/algorithm/method/dong-tai-gui-hua.md)
       * [回溯](computer_science/algorithm/method/hui-su.md)
     * [哈希算法](computer_science/algorithm/ha-xi-suan-fa.md)
