@@ -35,5 +35,6 @@
 
 ## 相关链接
 
-《深入理解 Java 虚拟机》第一章：走进 Java
+* [《深入理解 Java 虚拟机》第一章：走进 Java](https://item.jd.com/12607299.html)
+* [图片来源](https://docs.oracle.com/javase/8/docs/)
 
