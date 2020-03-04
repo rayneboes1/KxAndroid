@@ -27,6 +27,18 @@
 
 ## Java 发展史
 
+* 1991 年 4 月，Java 的前身 Oak 诞生，目的是能够在各种消费电子产品上运行的程序架构。
+* 1995 年 5 月 23 日，Oak 改名为 Java，并在 SunWorld 大会上正式发布1.0版本，Java 语言第一次提出了“Write Once，Run Everywhere”
+* 1996 年 1 月 23 日，JDK 1.0 发布。JDK 1.0 提供了一个纯解释执行的 Java 虚拟机实现（Sun Classic VM）。JDK 1.0 版本的代表技术包括：Java 虚拟机、AWT、Applet等。
+* 1997年 2 月 19 日，Sun 公司发布了 JDK 1.1，代表技术：JAR 文件格式、JDBC、JavaBeans、RMI。Java 语法上有内部类、反射。
+* 1998 年 12 月 4 日，JDK 1.2 发布。Sun 在这个版本中将Java技术体系拆分成三个方向：J2SE、J2EE 和 J2ME。代表性技术很多：EJB、Java Plug-in、Java IDL、Swing，在这个版本中 JVM 第一次内置了 JIT 编译器。
+* 1999 年 4 月 27 日，HotSpot 虚拟机发布。是 JDK 1.3及之后所有版本的Sun JDK 的默认虚拟机。
+* 2000年5月8日，JDK 1.3  发布。对类库进行了改进（数学运算和新的 Timer API），JNDI 服务从JDK 1.3开始作为平台级服务提供，使用CORBA IIOP 来实现 RMI 的通信协议。这个版本对 Java 2D 做了很多改进。
+* 2002 年 2 月 13 日，JDK 1.4 发布。JDK 1.4 是 Java 真正走向成熟的版本。新增技术特性：正则表达式、异常链、NIO、日志类、XML 解析器和XSLT转换器等。
+* 2004年9月30日，JDK 1.5 发布，在Java 语法易用性上做了很大改进：自动装箱、泛型、自动注解、枚举、可变长参数、foreach 循环等；这个版本还改进了 Java 内存模型、提供了 java.util.concurrent 并发包等。
+* 2006年 12 月 11日，JDK 1.6 发布。这个版本终结了 J2SE、J2EE 和 J2ME 的命名法，启动 Java SE 6、Java ME 6、Java EE  6的命名方式。改进：提供动态语言支持（通过内置Mozilla JavaScript Rhino 引擎实现）、提供编译 API和微型 HTTP 服务器 API；对 JVM 内部做了很大改进：锁与同步、垃圾收集、类加载等方面的算法都有很大改动。
+* 2006 年 11 月 13 日，Sun 公司宣布会将 Java 开源，并在随后一年多的时间里，陆续将 JDK  的各个部分在 GPL v2 协议下开源，并建立 OpenJDK 组织对这些源码进行独立管理。
+
 ## JVM 发展史
 
  
