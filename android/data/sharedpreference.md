@@ -647,16 +647,7 @@ writeToFile 是执行文件写入的方法，代码如下，我省略的一些�
 ```text
 @GuardedBy("mWritingToDiskLock")
 private void writeToFile(MemoryCommitResult mcr, boolean isFromSyncCommit) {
-    // 一些时间点，主要用于日志输出
-    long startTime = 0;
-    long existsTime = 0;
-    long backupExistsTime = 0;
-    long outputStreamCreateTime = 0;
-    long writeTime = 0;
-    long fsyncTime = 0;
-    long setPermTime = 0;
-    long fstatTime = 0;
-    long deleteTime = 0;
+    // 省略了一些代码
 
     boolean fileExists = mFile.exists();
 
@@ -922,7 +913,7 @@ public static void addFinisher(Runnable finisher) {
 }    
 ```
 
-### queue
+### QueuedWork\#queue\(\)
 
 前面在 SharedPreferencesImpl\#enqueDiskWrite\(\)，调用了queue 方法将文件写入工作入队，该方法源码如下：
 
@@ -1198,8 +1189,6 @@ public void handleStopActivity(IBinder token, boolean show, int configChanges,
         //...
 }
 ```
-
-
 
 ## 建议
 
