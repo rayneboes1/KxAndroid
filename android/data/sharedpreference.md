@@ -1199,11 +1199,7 @@ public void handleStopActivity(IBinder token, boolean show, int configChanges,
 }
 ```
 
-commit 和 apply 区别（为什么推荐用 apply）？
 
-commit 会等待文件写入完成，并且有可能会在主线程写入文件，并且没有针对短时间内频繁更新做优化，有可能导致每次操作都在主线程写入。
-
-apply 如果短时间内\(100ms\)有多次提交，只有最后一次会执行文件写入。并且是在单独的线程里执行写入，不会影响性能。
 
 ## 建议
 
@@ -1212,6 +1208,16 @@ apply 如果短时间内\(100ms\)有多次提交，只有最后一次会执行�
 多次edit，一次apply
 
 降低sp的大小，避免一个app只使用一个Sp，这样文件将会变得很大，写入时间会变长。如果恰好卡在 waitToFinish 这样的时间点，有可能造成 ANR。
+
+## 相关问题
+
+### commit 和 apply 区别？
+
+commit 会等待文件写入完成，并且有可能会在主线程写入文件，并且没有针对短时间内频繁更新做优化，有可能导致每次操作都在主线程写入。
+
+apply 如果短时间内\(100ms\)有多次提交，只有最后一次会执行文件写入（因为会对比每次提交的版本号是否与当前内存版本号一致），并且是在单独的线程里执行写入，不会影响性能。
+
+## 相关链接
 
 [SharedPreferences灵魂拷问之原理](https://juejin.im/post/5df7af66e51d4557f17fb4f7)
 
