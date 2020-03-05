@@ -289,7 +289,7 @@ private void loadFromDisk() {
 
 ## 读取值
 
-getString 在 SharedPreferencesImpl 中方法代码为：
+以 `getString` 方法为例，在 `SharedPreferencesImpl`中代码：
 
 ```text
 public String getString(String key, @Nullable String defValue) {
@@ -301,7 +301,7 @@ public String getString(String key, @Nullable String defValue) {
 }
 ```
 
-在读取前，先调用了 awaitLoadedLocked 方法在文件还没有准备好时进行等待：
+在读取前，先调用了 awaitLoadedLocked 方法，在还没有完成文件读取时进行等待：
 
 ```text
 private final Object mLock = new Object();
@@ -320,13 +320,13 @@ private void awaitLoadedLocked() {
 }
 ```
 
-而上面 loadFromDisk 方法在读取成功后会调用 mLock.notifyAll 方法，从而读取操作可以继续。
+而前面 loadFromDisk 方法在读取成功后会调用 mLock.notifyAll 方法，从而通知读取操作可以继续。
 
-值的读取就是从 map 中根据 key 获取对应的值。
+值的读取就是从生成的 HashMap 中根据 key 获取对应的值。
 
 ## 写入值
 
-在写入时，需要先调用 edit 方法，获取一个 Editor 对象。
+相比读取，写入过程就复杂很多了。在写入时，需要先调用 `edit` 方法，获取一个 `Editor` 对象。
 
 ### 创建 Editor
 
@@ -344,7 +344,7 @@ public Editor edit() {
 
 当 Sp 可用时，创建了一个 `EditorImpl` 对象并返回。`EditorImpl` 是`Editor`的实现类，同时是`SharedPreferencesImpl`的内部类。
 
-EditorImpl 只有三个属性：
+`EditorImpl` 只有三个属性：
 
 ```text
 public final class EditorImpl implements Editor {
@@ -353,7 +353,7 @@ public final class EditorImpl implements Editor {
     //新增或者发生变更的键值对
     @GuardedBy("mEditorLock")
     private final Map<String, Object> mModified = new HashMap<>();
-
+    //是否需要清空之前的值
     @GuardedBy("mEditorLock")
     private boolean mClear = false;
     
@@ -361,11 +361,11 @@ public final class EditorImpl implements Editor {
 }
 ```
 
+执行修改主要是一些重载的 put 方法，remove 方法用于移除一个键值对，clear 方法用于清空修改。
+
 ### putXxx
 
-执行修改主要是一些重载的put方法，还有remove方法用于移除一个key，clear 方法用于清空修改。
-
-EditorImpl 中的对应的修改方法代码如下：\(put 方法以 putString 为例\)：
+EditorImpl 中的对应的修改方法代码如下\(put 方法以 putString 为例\)：
 
 ```text
 @Override
@@ -397,9 +397,9 @@ put 和 remove 操作的是 EditorImpl 的 mModified，而 clear 方法只是将
 
 另外这些方法都返回 Editor 对象，方便链式调用。
 
-通过对 EditorImpl 操作后，所有要新增或发生修改的键值对都被记录在了 mModified 这个 map 中，而要使这些更改生效，就需要调用 apply 或者 commit 进行提交。
+通过对 EditorImpl 操作后，所有要新增或发生修改的键值对都被记录在了 mModified 这个 map 中，而要使这些更改生效，就需要调用 `apply` 或者 `commit` 进行提交。
 
-我们先来看下 apply 方法。
+先来看下 apply 方法。
 
 ### EditorImpl\#apply\(\)
 
@@ -435,18 +435,18 @@ public void apply() {
 
     SharedPreferencesImpl.this.enqueueDiskWrite(mcr, postWriteRunnable);
 
-    // 写入内存后就可以通知监听者
+    // 写入内存后就可以通知监听者了
     notifyListeners(mcr);
 }
 ```
 
 apply 逻辑是：
 
-1. 通过 commitToMemory 方法把修改提交至内存中
-2. 通过 enqueueDiskWrite 将磁盘写入任务提交至任务队列
+1. 通过 `commitToMemory` 方法把修改提交至内存中
+2. 通过 `enqueueDiskWrite` 将磁盘写入任务提交至任务队列
 3. 通知监听者
 
-> awaitCommit 可能在文件写入时被执行，也可能会在QueuedWork执行完所有任务后再执行。如果通过文件写入过程执行，会从QueuedWork的finisher中把它移除。
+> awaitCommit 可能在文件写入时被执行，也可能会在 QueuedWork 执行完所有任务后再执行。如果通过文件写入过程执行，会从QueuedWork的finisher中把它移除。
 
 ### EditorImpl\#commitToMemory\(\)
 
