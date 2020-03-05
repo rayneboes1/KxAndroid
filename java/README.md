@@ -38,6 +38,9 @@
 * 2004年9月30日，JDK 1.5 发布，在Java 语法易用性上做了很大改进：自动装箱、泛型、自动注解、枚举、可变长参数、foreach 循环等；这个版本还改进了 Java 内存模型、提供了 java.util.concurrent 并发包等。
 * 2006年 12 月 11日，JDK 1.6 发布。这个版本终结了 J2SE、J2EE 和 J2ME 的命名法，启动 Java SE 6、Java ME 6、Java EE  6的命名方式。改进：提供动态语言支持（通过内置Mozilla JavaScript Rhino 引擎实现）、提供编译 API和微型 HTTP 服务器 API；对 JVM 内部做了很大改进：锁与同步、垃圾收集、类加载等方面的算法都有很大改动。
 * 2006 年 11 月 13 日，Sun 公司宣布会将 Java 开源，并在随后一年多的时间里，陆续将 JDK  的各个部分在 GPL v2 协议下开源，并建立 OpenJDK 组织对这些源码进行独立管理。
+* 2009 年 4 月 20 日，Oracle 收购 Sun 公司，
+* 2011 年 7月28日，JDK  1.7 发布，提供新的 G1 收集器、加强对非 Java 语言的调用支持、升级类加载架构等。从 Java SE 7 update 4 开始， Java 开始支持 Mac os 系统。
+* todo JDK 1.8 1.9 10 11 12
 
 ## JVM 发展史
 
