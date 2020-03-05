@@ -1192,11 +1192,11 @@ public void handleStopActivity(IBinder token, boolean show, int configChanges,
 
 ## 建议
 
-尽量使用apply
-
-多次edit，一次apply
-
-降低sp的大小，避免一个app只使用一个Sp，这样文件将会变得很大，写入时间会变长。如果恰好卡在 waitToFinish 这样的时间点，有可能造成 ANR。
+* 尽量使用apply
+* 多次 put ，一次apply
+* 拆分 sp 文件的大小，避免一个 app 只使用一个 Sp，这样文件将会变得很大，写入时间会变长。如果恰好卡在 waitToFinish 这样的时间点，有可能造成 ANR。
+* 不要连续多次edit\(\), 应该获取一次获取edit\(\),然后多次执行putxxx\(\), 减少内存波动
+* 不要使用MODE\_MULTI\_PROCESS
 
 ## 相关问题
 
@@ -1207,6 +1207,8 @@ commit 会等待文件写入完成，并且有可能会在主线程写入文件�
 apply 如果短时间内\(100ms\)有多次提交，只有最后一次会执行文件写入（因为会对比每次提交的版本号是否与当前内存版本号一致），并且是在单独的线程里执行写入，不会影响性能。
 
 ## 相关链接
+
+[gityuan:全面剖析SharedPreferences](http://gityuan.com/2017/06/18/SharedPreferences/)
 
 [SharedPreferences灵魂拷问之原理](https://juejin.im/post/5df7af66e51d4557f17fb4f7)
 
