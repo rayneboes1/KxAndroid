@@ -8,8 +8,6 @@ description: 源码解析
 公众号已发表文章：
 
 [SharedPreferences 源码解析\(上） ](https://mp.weixin.qq.com/s/RNWcE9TZl2cfEcGjS-GQAw)
-
-[SharedPreferences 源码解析\(下）](https://mp.weixin.qq.com/s/AE7QcqYiwmrYCMiOJMSsBA)
 {% endhint %}
 
 ## getSharedPreferences
