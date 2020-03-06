@@ -108,7 +108,7 @@
   * [数据存储](android/data/README.md)
     * [Sqlite](android/data/sqlite.md)
     * [序列化](android/data/xu-lie-hua.md)
-    * [SharedPreference](android/data/sharedpreference.md)
+    * [SharedPreferences](android/data/sharedpreference.md)
   * [资源](android/zi-yuan/README.md)
     * [图片加载](android/zi-yuan/tu-pian-jia-zai.md)
   * [动画](android/animation/README.md)
