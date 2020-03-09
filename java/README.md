@@ -92,11 +92,13 @@ Liquid VM 即是现在的 JRockit VE（Virtual Edition），它是 BEA 公司开
 
 ### Apache Harmony/Google Android Dalvik VM
 
+Apache Harmony 是一个 Apache 软件基金会旗下以 Apache License 协议开源的实际兼容于 JDK 1.5 和 JDK 1.6 的 Java 程序运行平台，它包含自己的虚拟机和 Java 库，但是没有通过  TCK \(Technology Compatibility Kit\)认证。Apache Harmony 没有经过大规模的商业运用，但是它的许多代码被吸纳进 IBM 的 JDK 7 实现以及 Google  Android SDK 中，对 Android 的 发展起到了很大的推动作用。
 
+Dalvik VM 是 Android  平台的核心组成部分之一，它并不是一个 Java 虚拟机，没有遵循 Java 虚拟机规范，不能直接执行 Java 的 Class 文件，使用的寄存器架构而不是 JVM 中常见的栈架构。但是它执行的 dex \(Dalvik Executable\)文件可以通过 class 文件转化而来，使用 Java 语法编写应用程序，可以直接使用大部分的 Java API 等。
 
+###  Microsoft JVM
 
-
-
+微软为了在 IE 3中支持 Java Applets 应用而开发的自己的 Java 虚拟机，虽然只有Windows版本，却是当时 Windows 下性能最好的 Java 虚拟机，但 1997 年 10 月，Sun 公司正式以侵占商标 、不正当竞争等罪名控告微软公司，最终微软承诺终止其 Java 虚拟机的发展，并逐步在产品中移除 Java 虚拟机相关功能。
 
 ## 相关链接
 
