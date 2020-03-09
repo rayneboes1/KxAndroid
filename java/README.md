@@ -80,6 +80,20 @@ Sun 公司于1997-1998年研发的一个实验性质的虚拟机，从名字可�
 
 ### BEA JRockit/IBM J9 VM
 
+JRockit VM 曾经号称「世界上速度最快的虚拟机」，它是BEA 公司2002年从 Appeal Virtual Machines 公司收购的虚拟机，BEA 公司将其发展为一款专门为服务器硬件和服务器端应用场景高度优化的虚拟机，由于专注服务端应用，它可以不太关注应用启动速度，因此内部不包含解析器实现，全部代码都靠即时编译器编译后执行。
+
+IBM J9 VM 最初是由 IBM Ottawa 实验室一个名为 SmallTalk 的虚拟机扩展而来。IBM J9 的市场定位与 Sun HotSpot 比较接近，它是一款设计上从服务端到桌面应用再到嵌入式都全面考虑的多用途虚拟机。J9的开发目的是作为 IBM 各种 Java 产品的执行平台。
+
+### Azul VM /BEA Liquid VM
+
+Azul VM 是 Azul Systems 公司在 HotSpot 基础上进项大量改进，运行于 Azul Systems 公司的专有硬件 Vega 系统上的 Java 虚拟机，每个 Azul VM 实例都可以管理至少数十个CPU和数百GB内存的硬件资源，并提供在巨大内存范围内实现可控的 GC 时间的垃圾收集器、为专有硬件优化的线程调度等优秀特性。
+
+Liquid VM 即是现在的 JRockit VE（Virtual Edition），它是 BEA 公司开发的，可以直接运行在自家的 Hypervisor 系统上的 JRockit VM 的虚拟化版本。Liquid VM 不需要操作系统的支持，或者说它本身实现了一个专用操作系统的必要功能，如文件系统、网络支持等。
+
+### Apache Harmony/Google Android Dalvik VM
+
+
+
 
 
 
