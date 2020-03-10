@@ -1,10 +1,10 @@
 # 自动内存管理机制
 
-## JVM 内存是如何划分的？
+## JVM 内存区域划分
 
 ![](../../.gitbook/assets/jie-ping-2019120922.23.17.png)
 
-### 程序计数器（Program Counter Register ）
+### 1. 程序计数器（Program Counter Register ）
 
 一块较小的内存区域，可以看做是当前线程执行字节码的行号指示器。字节码解释器就是通过 改变这个计数器的值来决定下一条要读取的字节码指令。分支、循环、异常处理都需要依赖它完成。
 
@@ -14,7 +14,7 @@
 
 此内存区域是Java虚拟机规范中唯一一个没有规定任何 OutOfMemeoryError 的区域。
 
-### Java 虚拟机栈（JVM Stacks）
+### 2. Java 虚拟机栈（JVM Stacks）
 
 线程私有的内存区域，生命周期与线程相同。
 
@@ -29,13 +29,13 @@
 * 如果线程请求的栈深度大于虚拟机允许的最大深度，将抛出StackOverflowError
 * 如果虚拟机栈可以动态扩展，但是扩展时无法申请到足够的内存，则抛出OutOfMemoryError
 
-### 本地方法栈（Native Method Stack）
+### 3. 本地方法栈（Native Method Stack）
 
 与Java 虚拟机栈作用类似，区别主要自安于本地方法栈为Native方法服务，而虚拟机栈为 Java 方法服务。
 
 与虚拟机栈一样，本地方法栈区域也会抛出 StackOverflowError 和 OutOfMemoryError。
 
-### Java 堆（Java Heap）
+### 4. Java 堆（Java Heap）
 
 一块**线程共享**的区域，在虚拟机启动时创建，用于存放对象实例。Java 虚拟机规范规定**所有的 对象和数组都要在堆上分配。**
 
@@ -43,7 +43,7 @@ Java 堆是垃圾收集器管理的主要区域，可以处于不连续的内存
 
 如果堆上没有足够内存完成对象分配，且不可扩展时，会抛出 OutOfMemoryError。
 
-### 方法区（Method Area）
+### 5. 方法区（Method Area）
 
 也是线程共享的内存区域，用于存储被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据。
 
@@ -51,7 +51,7 @@ Java 虚拟机规范对方法区的限制非常宽松，除了像Java堆一样�
 
 当方法区无法满足内存分配需求时，将抛出 OutOfMemoryError。
 
-### 运行时常量池（Runtime Constant Pool）
+#### 运行时常量池（Runtime Constant Pool）
 
 **方法区的一部分**，Class 文件除了类的版本、字段、方法、接口等描述信息，还有常量池（Constant Pool Table），用于存放编译器生成的各种字面量和符号引用，这部分内容将在类加载后进入方法区的运行时常量池存放。
 
@@ -61,7 +61,7 @@ Java 虚拟机规范对运行时常量池没有做任何细节要求。
 
 运行时常量池收方法区内存限制，无法再申请到内存时将抛出 OutOfMemoryError。
 
-### 直接内存（Direct Memory）
+### 6. 直接内存（Direct Memory）
 
 不是虚拟机运行时数据区的一部分，也不是 Java 虚拟机规范中定义的内存区域。
 
