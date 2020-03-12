@@ -69,17 +69,62 @@ JDK 1.4 加入了 NIO 类，引入了一种基于通道（Channel）和缓冲区
 
 直接内存不受Java堆大小限制，但会受内存大小和 CPU 寻址空间限制，内存不足时抛出 OutOfMemoryError。
 
+## 如何判断对象已死？
+
+### 引用计数法
+
+给对象增加一个引用计数器，当有地方引用时，计数器的值加1；当引用失效时，计数器减1；计数器为0时则对象不再被引用。
+
+实现简单、效率高，致命缺点是无法解决循环引用问题：
+
+```text
+class Instance{
+   Instance ins;
+}
+
+public static void main(String... args){
+    Instance a = new Instance();
+    Instance b = new Instance();
+    a.ins = b;
+    b.ins = a;
+    //gc
+    System.gc();
+    //按照引用计数法，则a和b应该不会被回收，实际上 a 和 b 会被回收 
+}
+```
+
+### 可达性分析
+
+通过一系列成为"GC Roots" 的对象作为起始点向下搜索，经过的路径为引用链\(Reference Chain\)，当一个对象到 GC Root 没有任何引用链相连\(即GC Root 到此对象不可达\)，则证明此对象是不可用的，可以被回收。
+
+Java 语言中，可以作为 GC Root 的对象有：
+
+* 虚拟机栈（栈帧中的本地变量表）中引用的对象
+* 方法区中类静态属性引用的对象
+* 方法区中常量引用的对象
+* 本地方法栈中 JNI 引用的对象
+
 ## 四种引用类型
 
 在 JDK 1.2 后，Java 对引用类型进行了扩充，将引用氛围强、软、弱、虚四种。
 
-* 强引用（Strong Reference）: 形如 Object a = new Object\(\)的引用，只要对象的强引用存在，垃圾收集器就算抛出 OOM 也永远不会回收此对象
-* 软引用（Soft Reference）：用来描述有用但非必须的对象。对于软引用关联的对象，在即将抛出OOM之前，会将它们进行一次回收，如果回收完空间还是不够，才抛出 OOM。JDK 提供了 SoftReference 来实现软引用。
-* 弱引用（Weak Reference）：**描述非必须的对象，比软引用更弱一些，被弱引用关联的对象只能生存到下一次垃圾回收之前**。当垃圾收集器工作时，无论内存是否够用，都会回收只被弱引用关联的对象。JDK 提供 WeakReference 实现了弱引用。
+### 强引用（Strong Reference
+
+形如 Object a = new Object\(\)的引用，只要对象的强引用存在，垃圾收集器就算抛出 OOM 也永远不会回收此对象
+
+### 软引用（Soft Reference）
+
+用来描述有用但非必须的对象。对于软引用关联的对象，在即将抛出OOM之前，会将它们进行一次回收，如果回收完空间还是不够，才抛出 OOM。JDK 提供了 SoftReference 来实现软引用。
+
+### 弱引用（Weak Reference）
+
+**描述非必须的对象，比软引用更弱一些，被弱引用关联的对象只能生存到下一次垃圾回收之前**。当垃圾收集器工作时，无论内存是否够用，都会回收只被弱引用关联的对象。JDK 提供 WeakReference 实现了弱引用。
 
 > 通常用于避免内存泄漏。比如[Handler的使用](https://wenhaiz.xyz/use-handler-correctly)
 
-* 虚引用（Phantom Reference）:最弱的引用关系，不影响对象的生存时间，**无法通过虚引用获取对象实例。**为对象设置虚引用的目的就是在回收时收到系统通知。JDK 提供了PhantomReference 实现虚引用。
+### 虚引用（Phantom Reference）
+
+最弱的引用关系，不影响对象的生存时间，**无法通过虚引用获取对象实例。**为对象设置虚引用的目的就是在回收时收到系统通知。JDK 提供了PhantomReference 实现虚引用。
 
 ## 垃圾回收算法
 
