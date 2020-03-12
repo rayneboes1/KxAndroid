@@ -22,7 +22,7 @@
 
 ## 实例
 
-![&#x88C5;&#x9970;&#x5668;&#x6A21;&#x5F0F;demo](../../.gitbook/assets/image%20%281%29.png)
+![&#x88C5;&#x9970;&#x5668;&#x6A21;&#x5F0F;demo](../../.gitbook/assets/image%20%282%29.png)
 
 ```text
 public interface Shape {

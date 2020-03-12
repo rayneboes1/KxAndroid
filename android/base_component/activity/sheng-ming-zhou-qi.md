@@ -2,7 +2,7 @@
 
 ### [官方文档](https://developer.android.com/guide/components/activities/?hl=zh-CN#Lifecycle)
 
-![Activity &#x751F;&#x547D;&#x5468;&#x671F;](../../../.gitbook/assets/image%20%2832%29.png)
+![Activity &#x751F;&#x547D;&#x5468;&#x671F;](../../../.gitbook/assets/image%20%2834%29.png)
 
 ### onStart\(\)和onResume\(\)的区别？
 
@@ -42,7 +42,7 @@ Activity A 启动 Activity B：
 
 当Activity 重建时，可以在onCreate或者onRestoreInstanceState方法中拿到保存的数据。
 
-![&#x4FDD;&#x5B58; Activity &#x72B6;&#x6001;](../../../.gitbook/assets/image%20%2816%29.png)
+![&#x4FDD;&#x5B58; Activity &#x72B6;&#x6001;](../../../.gitbook/assets/image%20%2818%29.png)
 
 Activity 的 onSaveInstanceState 的默认实现会调用 View 的onSaveInstanceState用于恢复View状态（需要为View 指定 id），比如EditText的输入文本等。
 
