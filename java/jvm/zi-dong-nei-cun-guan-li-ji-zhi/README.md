@@ -106,9 +106,9 @@ Java 语言中，可以作为 GC Root 的对象有：
 
 ## 四种引用类型
 
-在 JDK 1.2 后，Java 对引用类型进行了扩充，将引用氛围强、软、弱、虚四种。
+在 JDK 1.2 后，Java 对引用类型进行了扩充，将引用分为强、软、弱、虚四种。
 
-### 强引用（Strong Reference
+### 强引用（Strong Reference）
 
 形如 Object a = new Object\(\)的引用，只要对象的强引用存在，垃圾收集器就算抛出 OOM 也永远不会回收此对象
 
