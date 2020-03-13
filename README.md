@@ -12,7 +12,7 @@ description: 怕什么真理无穷，进一寸有一寸的欢喜。
 
 手册中的很多题目都是我从别人的面经中摘抄，然后再从互联网搜集答案然后自己再验证整理。**如果你有更好的答案，欢迎提出 Issue 和 Pull Request。**
 
-> Github 仓库地址：[https://github.com/InterviewXX/InterviewAndroid](https://github.com/InterviewXX/InterviewAndroid)
+> Github 仓库地址：[https://github.com/KnowledgeXx/KxAndroid](https://github.com/KnowledgeXx/KxAndroid)
 
 很多知识点和答案都来自一些大佬的博客，他们分享精神和钻研精神令我敬佩，我会把参考的博客链接都附在相关页面内；也有一些知识点和答案来自一些书籍以及我付费订阅的专栏 ，我也一并会列出来，方便大家进一步研究。
 
