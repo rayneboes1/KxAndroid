@@ -97,7 +97,7 @@ public static void main(String... args){
 
 通过一系列成为"GC Roots" 的对象作为起始点向下搜索，经过的路径为引用链\(Reference Chain\)，当一个对象到 GC Root 没有任何引用链相连\(即GC Root 到此对象不可达\)，则证明此对象是不可用的，可以被回收。
 
-Java 语言中，可以作为 GC Root 的对象有：
+Java 语言中，可以作为 GC Root 的对象有\(全局引用和执行上下文\)：
 
 * 虚拟机栈（栈帧中的本地变量表）中引用的对象
 * 方法区中类静态属性引用的对象
