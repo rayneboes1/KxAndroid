@@ -28,7 +28,7 @@
 
 ## 实例
 
-![](../../.gitbook/assets/image%20%2841%29.png)
+![](../../.gitbook/assets/image%20%2843%29.png)
 
 
 
