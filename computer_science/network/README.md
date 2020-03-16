@@ -2,7 +2,7 @@
 
 ## OSI 七层协议
 
-![OSI &#x4E03;&#x5C42;&#x534F;&#x8BAE;](../../.gitbook/assets/image%20%284%29.png)
+![OSI &#x4E03;&#x5C42;&#x534F;&#x8BAE;](../../.gitbook/assets/image%20%285%29.png)
 
 
 

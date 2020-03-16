@@ -10,7 +10,7 @@ description: Transmission Control Protocol
 
 ## 报文结构
 
-![TCP &#x62A5;&#x6587;&#x7ED3;&#x6784;](../../../.gitbook/assets/image%20%2810%29.png)
+![TCP &#x62A5;&#x6587;&#x7ED3;&#x6784;](../../../.gitbook/assets/image%20%2812%29.png)
 
 ## 建立连接（三次握手）
 
