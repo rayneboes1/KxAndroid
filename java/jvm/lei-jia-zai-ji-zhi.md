@@ -67,7 +67,85 @@ class 文件的第5、6个字节为次版本号\(minor version\)，第7、8个�
 
 类索引和父类索引指向一个类型为CONSTANT\_Class\_info的类描述符常量，对于接口集合，入口的第一项u2类型的数据为接口计数器，表示索引表的容量，剩下的为u2类型的数据，指向类描述常量。
 
+### 字段表集合\(field\_info\)
 
+字段表用于描述类或接口中声明的变量，字段包括类级变量和实际级变量，但不包括方法内部声明的局部变量。字段表结构如下表：
+
+| 类型 | 名称 | 数量 |
+| :---: | :---: | :---: |
+| u2 | access\_flag | 1 |
+| u2 | name\_index | 1 |
+| u2 | descriptor\_index | 1 |
+| u2 | attributes\_count | 1 |
+| attribute\_info | attributes | attributes\_count |
+
+字段修饰符放在 `access_flags` 项目中，其可以设置的标识位如下表所示：
+
+| 标志名称 | 标志值 | 含义 |
+| :---: | :---: | :---: |
+| ACC\_PUBLIC | 0x0001 | 是否 public |
+| ACC\_PRIVATE | 0x0002 | 是否 private |
+| ACC\_PROTECTED | 0x0004 | 是否 protected |
+| ACC\_STATIC | 0x0008 | 是否 static |
+| ACC\_FINAL | 0x0010 | 是否 final |
+| ACC\_VOLATILE | 0x0040 | 是否 volatile |
+| ACC\_TRANSIENT | 0x0080 | 是否 transient |
+| ACC\_SYNTHETIC | 0x1000 | 是否由编译器自动生成 |
+| ACC\_ENUM | 0x4000 | 是否是枚举 |
+
+name\_index 和 descriptor\_index 是对常量的引用，分别代表字段的**简单名称**以及字段和方法的**描述符**。
+
+#### 全限定名称、简单名称和描述符
+
+* 全限定名称：org/test/class/TestClass
+* 简单名称：没有类型或参数修饰的方法或字段名称，`int m;` 其中 m 的简单名称是"m".
+* 描述符：描述字段的数据类型、方法的参数列表和返回值。根据描述符规则，基本数据类型以及代表无返回值的void类型都用一个大写字母来表示，而对象类型则用字符L加对象的全限定名表示，如下表：
+
+| 标识字符 | 含义 |
+| :---: | :---: |
+| B | 基本类型 byte |
+| C | 基本类型 char |
+| D | 基本类型 double |
+| F | 基本类型 float |
+| I | 基本类型 int |
+| J | 基本类型 long |
+| S | 基本类型 short |
+| Z | 基本类型 boolean |
+| V | 特殊类型 void |
+| L | 对象类型，如Ljava/lang/Object |
+
+对于数组类型，每个维度使用一个前置的"\["来描述，如定义为"java.lang.String\[\]\[\]"的二维数组，将被记录为"\[\[Ljava/lang/String;"。
+
+用描述符描述方法时，按照先参数列表、后返回值的顺序描述，参数列表按照参数的严格顺序放在一组小括号内。如方法"inc\(\)"的描述符为"\(\)V"，方法"int add\(int a,int b\)"的表述符为"\(II\)I"。
+
+字段表集合中不会列出从超类或者父接口中继承的字段，但有可能列出原本java代码中不包含的字段，比如在内部类中为了保持对外部类的访问性，会自动添加指向外部类实例的字段。
+
+### 方法表集合
+
+方法表集合与字段表集合结构相同，而由于 volatile 和 transient 不能修饰方法，所以方法表的访问标志中没有 ACC\_VOLATILE 和 ACC\_TRANSIENT，而增加了ACC\_SYNCHRONIZED、ACC\_NATIVE、ACC\_STRICTFP和ACC\_ABSTRACT。方法表的标志位取值见下表：
+
+| 标志名称 | 标志值 | 含义 |
+| :--- | :--- | :--- |
+| ACC\_PUBLIC | 0x0001 | 是否 public |
+| ACC\_PRIVATE | 0x0002 | 是否 private |
+| ACC\_PROTECTED | 0x0004 | 是否 protected |
+| ACC\_STATIC | 0x0008 | 是否 static |
+| ACC\_FINAL | 0x0010 | 是否 final |
+| ACC\_SYNCHRONIZED | 0x0020 | 是否 synchronized |
+| ACC\_BRIDGE | 0x0040 | 是否是编译器产生的桥接方法 |
+| ACC\_VARARGS | 0x0080 | 是否接受可变参数 |
+| ACC\_NATIVE | 0x0100 | 是否 native |
+| ACC\_ABSTRACT | 0x0400 | 是否 abstract |
+| ACC\_STRICTFP | 0x0800 | 是否 strictfp |
+| ACC\_SYNTHETIC | 0x1000 | 是否由编译器自动生成 |
+
+> 方法的代码经过编译成字节码指令后，存放在方法属性表集合中一个名为"Code"的属性里。
+
+如果父类方法没有在子类中被重写\(override\)，那么方法表集合中不会出现父类的方法，但可能出现有编译器添加的方法，例如类构造器"&lt;clinit&gt;"和实例构造器"&lt;init&gt;"。
+
+在 Java 语言中，要重载一个方法，除了要与原方法具有相同的简单名称之外，还要求必有有一个与原方法不同的特征签名，特征签名就是一个方法中年各个参数在常量池中的字段符合引用的集合，即**返回值不包含在特征签名里，因此Java中不能以返回值不同而对方法进行重载**。但在 class 文件格式中，特征签名的范围更大，只要描述符不完全一致的两个方法都可以共存，也就是说，如果两个方法具有相同的名称和特征签名\(java语言层面\)，但是返回值不同，是可以合法共存于一个class文件中。
+
+> Java 代码层面的方法特征签名包含方法名称、参数顺序和参数类型，而字节码层面的方法特征签名还包括返回值和受检异常表。
 
 ## 类加载过程
 
