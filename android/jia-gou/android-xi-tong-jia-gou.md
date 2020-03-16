@@ -2,7 +2,7 @@
 
 Android 基于 Linux 开放源代码开发，系统架构图如下。
 
-![Android &#x5E73;&#x53F0;&#x67B6;&#x6784;&#x56FE;](../../.gitbook/assets/image%20%2825%29.png)
+![Android &#x5E73;&#x53F0;&#x67B6;&#x6784;&#x56FE;](../../.gitbook/assets/image%20%2827%29.png)
 
 ## Linux 内核
 

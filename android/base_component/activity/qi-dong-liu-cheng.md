@@ -410,7 +410,7 @@ public void callActivityOnRestart() {
 }
 ```
 
-![Activity &#x542F;&#x52A8;&#x6D41;&#x7A0B;](../../../.gitbook/assets/image%20%2837%29.png)
+![Activity &#x542F;&#x52A8;&#x6D41;&#x7A0B;](../../../.gitbook/assets/image%20%2839%29.png)
 
 ## 参考
 

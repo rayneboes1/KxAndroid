@@ -2,7 +2,7 @@
 
 ## Java 技术体系
 
-![Java &#x6280;&#x672F;&#x4F53;&#x7CFB;&#x67B6;&#x6784;&#x56FE;](../.gitbook/assets/image%20%2841%29.png)
+![Java &#x6280;&#x672F;&#x4F53;&#x7CFB;&#x67B6;&#x6784;&#x56FE;](../.gitbook/assets/image%20%2843%29.png)
 
 传统意义上讲，Sun 官方定义的Java技术体系分为以下几个部分：
 
