@@ -87,9 +87,9 @@ public interface Callable<V> {
 
 两者区别如下图:
 
-![&#x5E76;&#x53D1;&#x793A;&#x610F;&#x56FE;](../../.gitbook/assets/image%20%2814%29.png)
+![&#x5E76;&#x53D1;&#x793A;&#x610F;&#x56FE;](../../.gitbook/assets/image%20%2815%29.png)
 
-![&#x5E76;&#x884C;&#x793A;&#x610F;&#x56FE;](../../.gitbook/assets/image%20%2827%29.png)
+![&#x5E76;&#x884C;&#x793A;&#x610F;&#x56FE;](../../.gitbook/assets/image%20%2828%29.png)
 
  [深入理解并发 / 并行，阻塞 / 非阻塞，同步 / 异步](https://juejin.im/entry/58ae4636b123db0052b1caf8)
 
@@ -101,7 +101,7 @@ public interface Callable<V> {
 
 #### 通用线程状态
 
-![&#x901A;&#x7528;&#x7EBF;&#x7A0B;&#x72B6;&#x6001;](../../.gitbook/assets/image%20%2819%29.png)
+![&#x901A;&#x7528;&#x7EBF;&#x7A0B;&#x72B6;&#x6001;](../../.gitbook/assets/image%20%2820%29.png)
 
 #### Java 线程状态
 

@@ -65,7 +65,7 @@ onStartCommand 返回值
 
 这两条路径并非完全独立。您可以绑定到已使用 startService\(\) 启动的服务。例如，您可以使用 Intent（标识要播放的音乐）来调用 startService\(\)，从而启动后台音乐服务。随后，当用户需稍加控制播放器或获取有关当前所播放歌曲的信息时，Activity 可通过调用 bindService\(\) 绑定到服务。此类情况下，在所有客户端取消绑定之前，stopService\(\) 或 stopSelf\(\) 实际不会停止服务。
 
-![&#x7ED1;&#x5B9A;&#x670D;&#x52A1;&#x751F;&#x547D;&#x5468;&#x671F;](../../.gitbook/assets/image%20%2816%29.png)
+![&#x7ED1;&#x5B9A;&#x670D;&#x52A1;&#x751F;&#x547D;&#x5468;&#x671F;](../../.gitbook/assets/image%20%2817%29.png)
 
 ## 相关题目
 
