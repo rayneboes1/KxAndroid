@@ -159,6 +159,7 @@
     * [AndroidX](android/ge-ban-ben-zhu-yao-te-xing/androidx.md)
     * [各系统版本特性](android/ge-ban-ben-zhu-yao-te-xing/ge-xi-tong-ban-ben-te-xing.md)
 * [开发工具](dev_tools/README.md)
+  * [正则表达式](dev_tools/zheng-ze-biao-da-shi.md)
   * [ADB](dev_tools/adb.md)
   * [Git](dev_tools/git.md)
 * [Kotlin](kotlin.md)
