@@ -31,7 +31,7 @@ description: Proxy Pattern
 
 ## 实例
 
-![UML &#x7C7B;&#x56FE;](../../.gitbook/assets/image%20%2853%29.png)
+![UML &#x7C7B;&#x56FE;](../../.gitbook/assets/image%20%2854%29.png)
 
 ```text
 public interface Image {

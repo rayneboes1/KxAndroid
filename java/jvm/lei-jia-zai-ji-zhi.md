@@ -11,7 +11,7 @@ class 文件是一组以8位字节为基础单位的二进制流，各个数据�
 * 无符号数属于基本的数据类型，以u1、u2、u4、u8来分别表示1、2、4、8个字节的无符号数，可以用来描述数字、符号引用、数量值或者按照UTF-8编码构成字符串值。
 * 表是由多个无符号数或者其他表组成的复合数据类型，所有的表都以"\_info"结尾，表用于描述有层次关系的复合结构的数据，整个class文件本质上就是一张表。
 
-![class &#x6587;&#x4EF6;&#x683C;&#x5F0F;](../../.gitbook/assets/image%20%2822%29.png)
+![class &#x6587;&#x4EF6;&#x683C;&#x5F0F;](../../.gitbook/assets/image%20%2823%29.png)
 
 无论是无符号数还是表，当需要描述同一类型但是数量不定的多个数据时，经常会使用一个前置的容量计数器加若干连续数据项表示，这时称这些连续的数据为某一类型的集合。
 
@@ -25,7 +25,7 @@ class 文件的魔数是为：`0xCAFEBABE`
 
 class 文件的第5、6个字节为次版本号\(minor version\)，第7、8个字节为主版本号\(major version\)。Java 的版本号从 45 开始，每发布一个大版本就加1。高版本的 JDK 能向下兼容低版本的class文件，但不能运行更高版本的class，虚拟机必须拒绝执行高于其版本号的class文件。
 
-![class &#x6587;&#x4EF6;&#x7248;&#x672C;&#x53F7;](../../.gitbook/assets/image%20%2829%29.png)
+![class &#x6587;&#x4EF6;&#x7248;&#x672C;&#x53F7;](../../.gitbook/assets/image%20%2830%29.png)
 
 ### 常量池
 
@@ -45,17 +45,17 @@ class 文件的第5、6个字节为次版本号\(minor version\)，第7、8个�
 
 常量池的每一个常量都是一个表，JDK 1.7 开始已经有14种不同类型的表结构。这些表结构的共同点是开始的第一位是一个u1类型的标志位\(tag\)，代表当前这个常量属于哪种类型。
 
-![&#x5E38;&#x91CF;&#x6C60;&#x4E2D;&#x5E38;&#x91CF;&#x7684;&#x7C7B;&#x578B;](../../.gitbook/assets/image%20%2837%29.png)
+![&#x5E38;&#x91CF;&#x6C60;&#x4E2D;&#x5E38;&#x91CF;&#x7684;&#x7C7B;&#x578B;](../../.gitbook/assets/image%20%2838%29.png)
 
 ![14 &#x4E2D;&#x5E38;&#x91CF;&#x7C7B;&#x578B;&#x7684;&#x6570;&#x636E;&#x7ED3;&#x6784;](../../.gitbook/assets/image%20%282%29.png)
 
-![14 &#x4E2D;&#x5E38;&#x91CF;&#x7C7B;&#x578B;&#x7684;&#x6570;&#x636E;&#x7ED3;&#x6784;](../../.gitbook/assets/image%20%286%29.png)
+![14 &#x4E2D;&#x5E38;&#x91CF;&#x7C7B;&#x578B;&#x7684;&#x6570;&#x636E;&#x7ED3;&#x6784;](../../.gitbook/assets/image%20%287%29.png)
 
 ### 访问标识
 
 常量池后的两个字节代表访问标识\(access\_flag\)，用于识别类或接口层次的访问信息，包括：这个class 是类还是接口、是否定义为public、是否定义为 abstract、是否定义为 final 。
 
-![&#x8BBF;&#x95EE;&#x6807;&#x8BC6;](../../.gitbook/assets/image%20%2838%29.png)
+![&#x8BBF;&#x95EE;&#x6807;&#x8BC6;](../../.gitbook/assets/image%20%2839%29.png)
 
 ### 类索引、父类索引与接口索引集合
 
@@ -153,19 +153,53 @@ name\_index 和 descriptor\_index 是对常量的引用，分别代表字段的*
 
 Java 虚拟机规范（SE 7）中预定义的属性如下表：
 
-![](../../.gitbook/assets/image%20%2830%29.png)
+![](../../.gitbook/assets/image%20%2831%29.png)
 
-![](../../.gitbook/assets/image%20%2846%29.png)
+![](../../.gitbook/assets/image%20%2847%29.png)
 
 属性表结构：
 
-![](../../.gitbook/assets/image%20%2813%29.png)
+![](../../.gitbook/assets/image%20%2814%29.png)
 
+#### 1. Code 属性
 
+Code 属性出现咋方法表的属性集合中，但并非所有方法都必须存在 Code 属性，比如接口或抽象类中的抽象方法。
 
+Code 属性表结构如下表：
 
+![](../../.gitbook/assets/image%20%285%29.png)
 
+attribute\_name\_index 是一项指向CONSTANT\_Utf8\_info 型常量的索引，常量值固定为 "Code"，代表该属性的属性名称。attribute\_length 代表了属性值的长度。
 
+max\_stack 代表了操作数栈深度的最大值，在方法执行的任何时刻，操作数栈都不会超过这个深度，虚拟机运行的时候要根据这个值来分配栈帧中操作栈深度。
+
+max\_locals 代表了局部变量表所需的存储空间，单位是slot。Slot是虚拟机为局部变量分配内存时使用的最小单位，对于byte、short、int等长度不超过32位的数据类型，每个数据类型占用1个 Slot，对于 long/double 需要两个 Slot 来存放。方法参数\(包括实例方法的隐藏参数"this"\)、显示异常处理的参数（try-catch块中catch块定义的异常）、方法体中定义的局部变量都需要使用局部变量表来保存。另外，max\_locals并不等于所有局部变量所占slot之和，因为局部变量表的 slot 可以重用，当代码执行超出一个局部变量的作用域时，这个局部变量所占用的slot可以被其他局部变量使用。
+
+code\_length 和 code 用于存放Java源程序编译后的字节码指令，code\_length 代表字节码的长度，code 是存储字节码指令的一系列字节流，每个指令都是一个u1类型的单字节。
+
+#### 2. Exceptions 属性
+
+方法表中与 Code 属性平级的属性，列举出方法中可能抛出的受检查异常，也就是 throws 关键字后面列举的异常。
+
+#### 3. LineNumberTable 属性
+
+描述 Java 源代码行数与字节码行数（偏移量）之间的对应关系，不是运行时必须的属性。如果不生成 LineNumberTable 属性，则运行时抛出异常时，堆栈中不会显示对应的行数，并且在调试程序时，无法按照源码行设置断点。
+
+#### 4. LocalVariableTable 属性
+
+用于描述栈帧中局部变量表中的变量与Java源代码中定义的变量的对应关系，不是运行时必须的属性。如果没有生成，则引用该方法时定义的参数名称将会消失，IDE将会使用arg0、arg1等名字来替换。
+
+#### 5. SourceFile 属性
+
+用于记录生成这个 Class 文件的源码文件名称，这个属性也是可选的。
+
+#### 6. ConstantValue 属性
+
+这个属性的作用是通知虚拟机自动为静态变量赋值，只有被 static 修饰的变量才可以使用这项属性。
+
+对于非静态变量的赋值是在构造器&lt;init&gt;中进行，对于类变量，可以使用ConstantValue属性或者在类初始化&lt;clinit&gt;方法中进行。目前 Sun javac 编译器的选择是：如果同时使用final 和static来修饰一个变量，并且这个变量的类型是基本类型或String，就生成 ConstantValue 属性初始化，否则就在&lt;clinit&gt;中进行初始化。
+
+#### 7. InnerClass 属性
 
 
 
