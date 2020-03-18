@@ -2,9 +2,10 @@
 
 ## 生命周期
 
-* * Q：谈一谈Fragment的生命周期？
-  * Q：Activity和Fragment的异同？
-  * Q：Activity和Fragment的关系？
+Q：谈一谈Fragment的生命周期？
+
+* Q：Activity和Fragment的异同？
+* Q：Activity和Fragment的关系？
 
 ## 何时会考虑使用Fragment？
 
