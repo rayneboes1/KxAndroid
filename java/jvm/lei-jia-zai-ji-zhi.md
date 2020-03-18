@@ -8,7 +8,74 @@
 
 ## 类加载的时机
 
+对于类加载过程开始执行「加载」的时机，JVM 规范并没有强制约束，但是对于类的「初始化」阶段，虚拟机规范则严格规定了有且只有5种情况必须立即对类进行初始化（加载、验证等过程自然需要在此之前开始）：
 
+### 主动引用
+
+* 遇到 new/getstatic/putstatic/invokestatic 这4条字节码指令时，Java 代码场景：使用`new`实例化一个类时、读取或设置一个类的静态字段（被final修饰、已在编译期把结果放入常量池的静态字段除外）、调用一个类的静态方法。
+* 使用 java.lang.reflect 包的方法对类进行反射调用时
+* 初始化一个类时，如果它的父类未被初始化，则需要先初始化父类
+* 虚拟机启动时，用户要指定一个要执行的主类\(包含main方法\)，虚拟机会先初始化这个类
+* 当使用JDK 1.7 的动态语言支持时，如果一个 java.lang.invoke.MethodHandle 实例最后的解析结果REF\_getStatic、REF\_putStatic、REF\_invokeStatic 的方法句柄对应的类没有进行过初始化
+
+以上的情况为「主动引用」，对于其他「被动引用」的情况不会触发类的初始化。
+
+### 被动引用
+
+典型的「被动引用」场景：
+
+#### 通过子类引用父类的静态字段，不会导致子类初始化
+
+```text
+public class SuperClass{
+    public static int value = 123;
+}
+
+public class SubClass extends SuperClass{
+
+}
+
+public class TestClass{
+    public static void main(String... args){
+        //只会触发父类的初始化
+        System.out.println(SubClass.value);
+    }
+
+}
+```
+
+#### 通过数组定义来引用类
+
+```text
+public class TestClass{
+    public static void main(String... args){
+       SuperClass[] arr = new SuperClass[10];
+    }
+
+}
+```
+
+不会触发 SuperClass 的初始化，但是会触发一个名为"\[Lcom.test.SuperClass"的类的初始化，这个类时虚拟机自动生成的，直接继承自java.lang.Object，创建动作有字节码指令 newarray 触发。
+
+#### 引用已经存在类的常量池中的常量
+
+```text
+public class ConstClass{
+    public static final String CONST = "hello world";
+}
+
+
+public class TestClass{
+    public static void main(String... args){
+        //不会触发 ConstClass 的初始化
+        System.out.println(ConstClass.CONST);
+    }
+}
+```
+
+虽然在 Java 源码中引用了 ConstClass 的常量，但是在编译阶段存在常量传播优化，已经将此常量的值存储到了 TestClass 类的常量池中，因此此处引用实际是对 TestClass 常量池中常量的引用。也就是说，TestClass 的 Class 文件之中并没有ConstClass 的引用符号，两个类在编译后就没有关系了。
+
+对于接口的加载，编译器会为其生成&lt;clinit&gt;类构造器用于初始化接口中定义的成员变量。与类初始化不同的是，接口在出初始化时并不要求其父接口都完成了初始化，只有在真正使用到父接口时\(比如使用父接口的常量\)才回初始化。
 
 ## 类加载过程
 
