@@ -2,7 +2,7 @@
 
 ### [官方文档](https://developer.android.com/guide/components/activities/?hl=zh-CN#Lifecycle)
 
-![Activity &#x751F;&#x547D;&#x5468;&#x671F;](../../../.gitbook/assets/image%20%2844%29.png)
+![Activity &#x751F;&#x547D;&#x5468;&#x671F;](../../../.gitbook/assets/image%20%2845%29.png)
 
 ### onStart\(\)和onResume\(\)的区别？
 
