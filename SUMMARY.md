@@ -88,6 +88,7 @@
     * [自动内存管理机制](java/jvm/zi-dong-nei-cun-guan-li-ji-zhi.md)
     * [类及其加载机制](java/jvm/lei-jia-zai-ji-zhi.md)
     * [Java 内存模型](java/jvm/java-nei-cun-mo-xing.md)
+    * [字节码指令](java/jvm/zi-jie-ma-zhi-ling.md)
     * [HotSpot 虚拟机实现细节](java/jvm/hotspot-dui-xiang.md)
   * [源码与原理](java/source.md)
   * [各版本主要特性](java/version_feature.md)
