@@ -234,3 +234,5 @@ public static final int value = 123;
 3. 父类加载器不存在，调用启动类加载器加载
 4. 如果发生 ClassNotFound，调用自己的 findClass 方法加载
 
+OSGI 框架原理：[https://www.ibm.com/developerworks/cn/java/j-lo-osgi/index.html](https://www.ibm.com/developerworks/cn/java/j-lo-osgi/index.html)
+
