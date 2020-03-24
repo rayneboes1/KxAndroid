@@ -163,7 +163,7 @@ public static int a = 123;
 
 那么在此阶段a的值为0，赋值为123的过程在初始化阶段。
 
-![&#x57FA;&#x672C;&#x6570;&#x636E;&#x7684;&#x96F6;&#x503C;](../../.gitbook/assets/image%20%2825%29.png)
+![&#x57FA;&#x672C;&#x6570;&#x636E;&#x7684;&#x96F6;&#x503C;](../../.gitbook/assets/image%20%2826%29.png)
 
 只有被final修饰的常量才会被赋成设定的值：
 
