@@ -54,8 +54,8 @@ JMM 要求 8个基本操作都具有原子性，但是对于64位的数据类型
 
 ## 在Java内存模型有哪些可以保证并发过程的原子性、可见性和有序性的措施？
 
-* 原子性：内存间交互操作 read、load、assign、use、store、write指令。（除long和double的非原子协定，未被volatile 修饰时，拆成两个32位），synchronized 关键字（lock和unlock）
-* 可见性：volatile 关键字，synchronized\(unlock之前要把变量同步到主内存\) 和 final（在构造器中初始化完成，且this指针没有被传递出去，其他线程可以看到该final字段）
+* 原子性：内存间交互操作 read、load、assign、use、store、write指令。（除long和double的非原子协定，未被volatile 修饰时，拆成两个32位），**synchronized** 关键字（对应monitorenter和monitorexit字节码指令和lock和unlock指令）
+* 可见性：volatile 关键字，**synchronized**\(unlock之前要把变量同步到主内存\) 和 final（在构造器中初始化完成，且this指针没有被传递出去，其他线程可以看到该final字段）
 * 有序性：volatile禁止指令重排序、**happens-before 原则**
 
 ## Happens-before 原则
