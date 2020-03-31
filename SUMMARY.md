@@ -145,7 +145,7 @@
     * [应用项目架构](android/jia-gou/ying-yong-jia-gou.md)
   * [开源框架源码或原理](android/open-source-lib-code/README.md)
     * [RxJava](android/open-source-lib-code/rxjava/README.md)
-      * [使用](android/open-source-lib-code/rxjava/shi-yong.md)
+      * [使用笔记](android/open-source-lib-code/rxjava/shi-yong.md)
       * [源码解析](android/open-source-lib-code/rxjava/yuan-ma-jie-xi.md)
     * [Retrofit](android/open-source-lib-code/retrofit.md)
     * [ButterKnife](android/open-source-lib-code/butterknife.md)
