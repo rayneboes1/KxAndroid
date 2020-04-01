@@ -83,7 +83,7 @@
     * [HashMap 源码](java/collection/hashmap.md)
   * [注解](java/zhu-jie.md)
   * [反射](java/reflection/README.md)
-    * [动态代理](java/reflection/dong-tai-dai-li.md)
+    * [JDK 动态代理](java/reflection/dong-tai-dai-li.md)
   * [JVM](java/jvm/README.md)
     * [自动内存管理机制](java/jvm/zi-dong-nei-cun-guan-li-ji-zhi.md)
     * [Class 文件格式](java/jvm/class-wen-jian-ge-shi.md)
