@@ -1,10 +1,8 @@
 # Retrofit
 
-## JDK 动态代理
+## [JDK 动态代理](../../java/reflection/dong-tai-dai-li.md)
 
 运行时生成代理类class
-
-[Java 动态代理](https://juejin.im/post/5ad3e6b36fb9a028ba1fee6a)
 
 ## Retrofit 对动态代理的应用
 
@@ -28,6 +26,44 @@ public <T> T create(final Class<T> service) {
             return loadServiceMethod(method).invoke(args != null ? args : emptyArgs);
           }
         });
+  }
+```
+
+```text
+ServiceMethod<?> loadServiceMethod(Method method) {
+    //从缓存获取
+    ServiceMethod<?> result = serviceMethodCache.get(method);
+    if (result != null) return result;
+
+    synchronized (serviceMethodCache) {
+      result = serviceMethodCache.get(method);
+      if (result == null) {
+        //解析注解，生成 ServiceMethod
+        result = ServiceMethod.parseAnnotations(this, method);
+        serviceMethodCache.put(method, result);
+      }
+    }
+    return result;
+  }
+```
+
+
+
+```text
+//ServiceMethod.java
+static <T> ServiceMethod<T> parseAnnotations(Retrofit retrofit, Method method) {
+    RequestFactory requestFactory = RequestFactory.parseAnnotations(retrofit, method);
+
+    Type returnType = method.getGenericReturnType();
+    if (Utils.hasUnresolvableType(returnType)) {
+      throw methodError(method,
+          "Method return type must not include a type variable or wildcard: %s", returnType);
+    }
+    if (returnType == void.class) {
+      throw methodError(method, "Service methods cannot return void.");
+    }
+
+    return HttpServiceMethod.parseAnnotations(retrofit, method, requestFactory);
   }
 ```
 
