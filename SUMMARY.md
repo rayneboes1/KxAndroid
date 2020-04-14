@@ -110,6 +110,7 @@
       * [自定义 View](android/base_component/view/zi-ding-yi-view.md)
       * [Window](android/base_component/view/window.md)
   * [数据存储](android/data/README.md)
+    * [存储结构](android/data/cun-chu-jie-gou.md)
     * [Sqlite](android/data/sqlite.md)
     * [序列化](android/data/xu-lie-hua.md)
     * [SharedPreferences](android/data/sharedpreference.md)
