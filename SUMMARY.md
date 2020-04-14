@@ -104,6 +104,7 @@
     * [BroadcastReceiver](android/base_component/broadcastreceiver.md)
     * [Fragment](android/base_component/fragment.md)
     * [View](android/base_component/view/README.md)
+      * [SurfaceView](android/base_component/view/surfaceview.md)
       * [事件分发](android/base_component/view/shi-jian-fen-fa.md)
       * [绘制流程](android/base_component/view/hui-zhi-yuan-li.md)
       * [自定义 View](android/base_component/view/zi-ding-yi-view.md)
