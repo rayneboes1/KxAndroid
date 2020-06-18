@@ -7,6 +7,7 @@ public static void main(String[] args) {
         ReferenceQueue<Object> q = new ReferenceQueue<>();
         Object test = new Object();
         WeakReference<Object> weakReference = new WeakReference<>(test,q);
+        //print false
         System.out.println("是否在队列中？"+(q.poll()==weakReference));
         test=null;
         try {
@@ -20,6 +21,7 @@ public static void main(String[] args) {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        // print true
         System.out.println("是否在队列中？"+(q.poll()==weakReference));
 
     }
