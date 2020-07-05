@@ -363,6 +363,8 @@ public boolean dispatchTouchEvent(MotionEvent event) {
 
 [安卓自定义View进阶-多点触控详解](https://www.gcssloop.com/customview/multi-touch)
 
+[事件分发和NestedScrolling（二）](https://blog.csdn.net/aishang5wpj/article/details/78873343)
+
 
 
 
