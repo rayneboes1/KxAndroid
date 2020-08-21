@@ -39,7 +39,7 @@ private int processPointerEvent(QueuedInputEvent q) {
     }
 ```
 
-`Window.Callback`都被Activity和Dialog实现，所以变量cb可能就是Activity和Dialog。
+`Window.Callback`都被**Activity和Dialog实现**，所以变量cb可能就是Activity和Dialog。
 
 ### Activity
 
@@ -290,7 +290,9 @@ onTouchEvent\(event\) 中会调用onClick 和 onLongClick。
 
 ##  滑动冲突
 
-父类根据需要重写 onIntercept 或者子View根据需要调用requestDisallowIntercept.
+父View根据需要重写 onIntercept 或者子View根据需要调用父View的requestDisallowIntercept禁用父View对事件的拦截。
+
+> requestDisallowIntercept 会向上传递。
 
 ## 相关问题
 
