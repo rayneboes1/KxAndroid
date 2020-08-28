@@ -31,7 +31,7 @@ public static void main(String[] args) {
 
 通过 Application 注册 ActivityLifeCycleCallback，当Activity onDestroy 时，开始监测Activity。
 
-具体方式时创建指向Activity的 WeakReference，并指定一个 ReferenceQueue。当Activity被回收时，WeakReference 会被添加到引用队列中。通过强制执行垃圾回收，确保Activity在未泄漏的情况下能被正常回收。然后去ReferenceQueue 中去找Activity对应的 WeakReference，如果没有，说明发生了泄漏。
+具体方式是创建指向Activity的 WeakReference，并指定一个 ReferenceQueue。当Activity被回收时，WeakReference 会被添加到引用队列中。通过强制执行垃圾回收，确保Activity在未泄漏的情况下能被正常回收。然后去ReferenceQueue 中去找Activity对应的 WeakReference，如果没有，说明发生了泄漏。
 
 ### Fragment
 
