@@ -116,13 +116,64 @@ class ProfilePagerAdapter(activity: FragmentActivity, private val fragmentIds: L
 }
 ```
 
+### Fragment 状态管理
+
 对于 fragment 销毁后的状态恢复 ，可以在 oncreateView 方法中的 savedInstanceState 恢复，在 onSaveInstanceState中保存需要保持的数据。 
 
-获取当前Fragment，可以通过fragmentManager.findFragmentByTag,tag为 "f" + holder.getItemId\(\)，具体逻辑在FragmentStateAdapter 的placeFragmentInViewHolder 方法中，需要指定itemId
+### 获取当前Fragment
 
-\* 
+获取当前Fragment，可以通过`fragmentManager.findFragmentByTag`,tag为 "f" + holder.getItemId\(\)，具体逻辑在FragmentStateAdapter 的`placeFragmentInViewHolder` 方法中，需要指定itemId
+
+```text
+// { f:notAdded, v:notCreated, v:notAttached } -> add, create, attach
+        if (!shouldDelayFragmentTransactions()) {
+            scheduleViewAttach(fragment, container);
+            mFragmentManager.beginTransaction()
+                    .add(fragment, "f" + holder.getItemId())
+                    .setMaxLifecycle(fragment, STARTED)
+                    .commitNow();
+            mFragmentMaxLifecycleEnforcer.updateFragmentMaxLifecycle(false);
+        } else {
+            if (mFragmentManager.isDestroyed()) {
+                return; // nothing we can do
+            }
+            mLifecycle.addObserver(new LifecycleEventObserver() {
+                @Override
+                public void onStateChanged(@NonNull LifecycleOwner source,
+                        @NonNull Lifecycle.Event event) {
+                    if (shouldDelayFragmentTransactions()) {
+                        return;
+                    }
+                    source.getLifecycle().removeObserver(this);
+                    if (ViewCompat.isAttachedToWindow(holder.getContainer())) {
+                        placeFragmentInViewHolder(holder);
+                    }
+                }
+            });
+        }
+```
 
 
 
 ## 可变集合
+
+需要重写复写 getItemId 和 containsItem 方法，如Demo 所示：
+
+```text
+override fun createViewPagerAdapter(): RecyclerView.Adapter<*> {
+        val items = items // avoids resolving the ViewModel multiple times
+        return object : FragmentStateAdapter(this) {
+            override fun createFragment(position: Int): PageFragment {
+                Log.d(TAG, "createFragment: $position")
+                val itemId = items.itemId(position)
+                val itemText = items.getItemById(itemId)
+                return PageFragment.create(itemText)
+            }
+
+            override fun getItemCount(): Int = items.size
+            override fun getItemId(position: Int): Long = items.itemId(position)
+            override fun containsItem(itemId: Long): Boolean = items.contains(itemId)
+        }
+    }
+```
 
