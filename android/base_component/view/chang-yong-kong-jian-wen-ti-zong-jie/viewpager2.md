@@ -157,7 +157,7 @@ class ProfilePagerAdapter(activity: FragmentActivity, private val fragmentIds: L
 
 ## 可变集合
 
-需要重写复写 getItemId 和 containsItem 方法，如Demo 所示：
+需要重写 getItemId 和 containsItem 方法（特别是可变的Fragment集合），如Demo 所示：
 
 ```text
 override fun createViewPagerAdapter(): RecyclerView.Adapter<*> {
