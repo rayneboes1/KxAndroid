@@ -106,6 +106,8 @@
     * [BroadcastReceiver](android/base_component/broadcastreceiver.md)
     * [Fragment](android/base_component/fragment.md)
     * [View](android/base_component/view/README.md)
+      * [常用控件问题总结](android/base_component/view/chang-yong-kong-jian-wen-ti-zong-jie/README.md)
+        * [ViewPager2](android/base_component/view/chang-yong-kong-jian-wen-ti-zong-jie/viewpager2.md)
       * [CoordinatorLayout](android/base_component/view/coordinatorlayout.md)
       * [SurfaceView](android/base_component/view/surfaceview.md)
       * [事件分发](android/base_component/view/shi-jian-fen-fa.md)
