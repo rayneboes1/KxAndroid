@@ -6,7 +6,7 @@ Github 地址：[https://github.com/android/views-widgets-samples/tree/master/Vi
 
 ## 基本使用
 
-ViewPager2 是基于RecyclerView实现，因此对于普通的布局可以直接使用RecyclerView的Adapter/ViewHolder来填充。
+ViewPager2 是基于RecyclerView+LinearLayoutManager+PageSnapHelper实现，因此对于普通的布局可以直接使用RecyclerView的Adapter/ViewHolder来填充。
 
 ## **与TabLayout**
 
