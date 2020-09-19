@@ -177,3 +177,33 @@ override fun createViewPagerAdapter(): RecyclerView.Adapter<*> {
     }
 ```
 
+## PageTransformer
+
+实现ViewPager2.PageTransformer接口
+
+```text
+/**
+     * A PageTransformer is invoked whenever a visible/attached page is scrolled.
+     * This offers an opportunity for the application to apply a custom transformation
+     * to the page views using animation properties.
+     */
+    public interface PageTransformer {
+
+        /**
+         * Apply a property transformation to the given page.
+         *
+         * @param page Apply the transformation to this page
+         * @param position Position of page relative to the current front-and-center
+         *                 position of the pager. 0 is front and center. 1 is one full
+         *                 page position to the right, and -2 is two pages to the left.
+         *                 Minimum / maximum observed values depend on how many pages we keep
+         *                 attached, which depends on offscreenPageLimit.
+         *
+         * @see #setOffscreenPageLimit(int)
+         */
+        void transformPage(@NonNull View page, float position);
+    }
+```
+
+通过viewPager.setPageTransformer来设置transformer，如需设置多个transformer，可以通过CompositePageTransformer来进行组合。
+
