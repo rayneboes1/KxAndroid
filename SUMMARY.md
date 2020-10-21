@@ -107,6 +107,7 @@
     * [Fragment](android/base_component/fragment.md)
     * [View](android/base_component/view/README.md)
       * [常用控件问题总结](android/base_component/view/chang-yong-kong-jian-wen-ti-zong-jie/README.md)
+        * [RecyclerView](android/base_component/view/chang-yong-kong-jian-wen-ti-zong-jie/recyclerview.md)
         * [ViewPager2](android/base_component/view/chang-yong-kong-jian-wen-ti-zong-jie/viewpager2.md)
       * [CoordinatorLayout](android/base_component/view/coordinatorlayout.md)
       * [SurfaceView](android/base_component/view/surfaceview.md)
