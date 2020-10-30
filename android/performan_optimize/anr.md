@@ -79,9 +79,13 @@ Choreographer 接收显示系统的时间脉冲\(垂直同步信号-VSync信号\
 
 通过判断两次回调 doFrame 执行的时间差，来判断是否发生ANR。
 
-## 参考
+## 参考博客
 
 [使应用能迅速响应](https://developer.android.com/training/articles/perf-anr?hl=zh-CN)
 
 [Android UI 卡顿及ANR检测原理](https://www.jianshu.com/p/a7dfac037c4c)
+
+{% embed url="https://duanqz.github.io/2015-10-12-ANR-Analysis\#21-anr%E7%9A%84%E7%9B%91%E6%B5%8B%E6%9C%BA%E5%88%B6" %}
+
+
 
