@@ -4,7 +4,9 @@ description: Jetpack  LifeCycle 库
 
 # LifeCycle 使用和原理
 
-## LifeCycle 是什么
+## LifeCycle 是什么？
+
+解决了什么问题
 
 ## 如何使用 LifeCycle 
 
