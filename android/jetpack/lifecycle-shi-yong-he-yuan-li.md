@@ -14,3 +14,9 @@ description: Jetpack  LifeCycle 库
 
 ## 注解的处理
 
+## 相关链接
+
+* [http://liuwangshu.cn/application/jetpack/3-lifecycle-theory.html\#post-comment](http://liuwangshu.cn/application/jetpack/3-lifecycle-theory.html#post-comment)
+
+
+
