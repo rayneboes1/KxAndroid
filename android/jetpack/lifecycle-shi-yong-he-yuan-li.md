@@ -90,7 +90,7 @@ class MyActivity : AppCompatActivity() {
 
 在上面例子中，如果Util.checkUserStatus 回调在onStop之后，就可能会导致MyActivity销毁后还在内存中，引发内存泄漏。 
 
-通过LifeCycle提供的机制，可以将维护组件响应其他组件生命周期的操作集中在组件内部，简而言之就是解耦。
+通过 LifeCycle 提供的机制，可以将维护组件响应其他组件生命周期的操作集中在组件内部，提高代码的可维护性，简而言之就是解耦。
 
 ## 如何使用 LifeCycle 
 
