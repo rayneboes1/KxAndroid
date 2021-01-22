@@ -52,9 +52,39 @@ class MyActivity : AppCompatActivity() {
 
 ## 如何使用 LifeCycle 
 
+
+
+```text
+// 1. 实现 LifecycleObserver 接口
+class MyObserver : LifecycleObserver {
+
+    //2. 通过注解标记要响应的生命周期事件
+    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    fun connectListener() {
+        ...
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    fun disconnectListener() {
+        ...
+    }
+}
+
+// 3. 添加监听
+myLifecycleOwner.getLifecycle().addObserver(MyObserver())
+```
+
 ## 如何监听生命周期事件
 
 ## 如何处理生命周期事件
+
+
+
+![Event &#x5F15;&#x53D1; State &#x8F6C;&#x6362;&#x793A;&#x610F;](../../.gitbook/assets/image%20%2858%29.png)
+
+关系
+
+
 
 ## 监听器注解的处理时机
 
