@@ -6,13 +6,55 @@ description: Jetpack  LifeCycle 库
 
 ## LifeCycle 是什么？
 
-LifeCycle 是一个可以用来响应 Android 中组件的生命周期的框架。
+LifeCycle 是Jetpack 的一部分，它提供了一种机制让程序可以更加方便的响应响应 Android 组件（如Activity）的生命周期。
 
-如果一个组件需要响应Android组件的生命周期事件，通常可以在对应的回调里添加。但是这会导致两个问题：
+在此之前，如果一个组件需要响应 Android 组件的生命周期事件，通常可以在对应的生命周期回调里进行：
+
+```text
+internal class MyLocationListener(
+        private val context: Context,
+        private val callback: (Location) -> Unit
+) {
+
+    fun start() {
+        // connect to system location service
+    }
+
+    fun stop() {
+        // disconnect from system location service
+    }
+}
+
+class MyActivity : AppCompatActivity() {
+    private lateinit var myLocationListener: MyLocationListener
+
+    override fun onCreate(...) {
+        myLocationListener = MyLocationListener(this) { location ->
+            // update UI
+        }
+    }
+
+    public override fun onStart() {
+        super.onStart()
+        myLocationListener.start()
+        // manage other components that need to respond
+        // to the activity lifecycle
+    }
+
+    public override fun onStop() {
+        super.onStop()
+        myLocationListener.stop()
+        // manage other components that need to respond
+        // to the activity lifecycle
+    }
+}
+```
+
+但是上面的代码在真实的项目中会导致两个问题：
 
 ### 代码质量问题
 
-* 可能有多个组件需要响应同一个Activity的生命周期，这就导致了Activity 的生命周期里充斥着处理各种组件的代码，不易维护
+* 可能有多个组件需要响应同一个 Activity 的生命周期，这就导致了Activity 的生命周期方法里充斥着处理各种组件的代码，不易维护
 * 可能多个Activity 需要使用同一个组件，那么就需要在每个Activity的生命周期回调中处理这个组件，产生不必要的重复代码
 
 ### 内存泄漏问题
