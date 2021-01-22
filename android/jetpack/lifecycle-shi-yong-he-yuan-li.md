@@ -6,7 +6,7 @@ description: Jetpack  LifeCycle 库
 
 ## LifeCycle 是什么？
 
-LifeCycle 是一个可以用来响应 Android 中组件生命周期的框架。
+LifeCycle 是一个可以用来响应 Android 中组件的生命周期的框架。
 
 如果一个组件需要响应Android组件的生命周期事件，通常可以在对应的回调里添加。但是这会导致两个问题：
 
@@ -90,9 +90,18 @@ myLifecycleOwner.getLifecycle().addObserver(MyObserver())
 
 添加监听时通过反射进行处理。
 
+
+
+## 监听应用生命周期
+
+{% embed url="https://developer.android.com/reference/androidx/lifecycle/ProcessLifecycleOwner?hl=zh-cn" %}
+
+## 自定义 LifeCyclerOwner
+
 ## 相关链接
 
-* [http://liuwangshu.cn/application/jetpack/3-lifecycle-theory.html\#post-comment](http://liuwangshu.cn/application/jetpack/3-lifecycle-theory.html#post-comment)
+* [官方链接](https://developer.android.com/topic/libraries/architecture/lifecycle?hl=zh-cn)
+* [Android Jetpack架构组件（三）带你了解Lifecycle（原理篇）](http://liuwangshu.cn/application/jetpack/3-lifecycle-theory.html#post-comment)
 
 
 
