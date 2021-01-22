@@ -116,6 +116,8 @@ class MyObserver : LifecycleObserver {
 myLifecycleOwner.getLifecycle().addObserver(MyObserver())
 ```
 
+组件之间通过事件来进行通信。
+
 ## 如何监听生命周期事件
 
 ## 如何处理生命周期事件
