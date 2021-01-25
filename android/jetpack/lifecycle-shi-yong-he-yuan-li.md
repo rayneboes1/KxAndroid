@@ -4,7 +4,7 @@ description: Jetpack  LifeCycle 库
 
 # LifeCycle
 
-## LifeCycle 是什么？
+## LifeCycle 解决了什么问题？
 
 LifeCycle 是Jetpack 的一部分，它提供了一种机制让程序可以更加方便的响应响应 Android 组件（如Activity）的生命周期。
 
@@ -99,38 +99,21 @@ class MyActivity : AppCompatActivity() {
 ```text
 dependencies {
     def lifecycle_version = "2.2.0"
-    def arch_version = "2.1.0"
 
-    // ViewModel
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
-    // LiveData
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+    // 可以通过 ViewModel/LiveData 间接引用
+    https://developer.android.com/jetpack/androidx/releases/lifecycle#declaring_dependencies
+    
     // Lifecycles only (without ViewModel or LiveData)
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
-
-    // Saved state module for ViewModel
-    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version"
 
     // Annotation processor
     kapt "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
     // alternately - if using Java8, use the following instead of lifecycle-compiler
     implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
-
-    // optional - helpers for implementing LifecycleOwner in a Service
-    implementation "androidx.lifecycle:lifecycle-service:$lifecycle_version"
-
-    // optional - ProcessLifecycleOwner provides a lifecycle for the whole application process
-    implementation "androidx.lifecycle:lifecycle-process:$lifecycle_version"
-
-    // optional - ReactiveStreams support for LiveData
-    implementation "androidx.lifecycle:lifecycle-reactivestreams-ktx:$lifecycle_version"
-
-    // optional - Test helpers for LiveData
-    testImplementation "androidx.arch.core:core-testing:$arch_version"
 }
 ```
 
-如果不继承注解处理库，会使用运行时通过反射调用。
+是否集成注解处理库，会影响Observer创建方式，不集成时通过反射调用。
 
 使用LifecycleObserver+注解
 
