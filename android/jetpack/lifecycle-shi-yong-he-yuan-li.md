@@ -2,7 +2,7 @@
 description: Jetpack  LifeCycle 库
 ---
 
-# LifeCycle 使用和原理
+# LifeCycle
 
 ## LifeCycle 是什么？
 
@@ -94,7 +94,7 @@ class MyActivity : AppCompatActivity() {
 
 ## 如何使用 LifeCycle 
 
-
+使用LifecycleObserver+注解
 
 ```text
 // 1. 实现 LifecycleObserver 接口
@@ -115,6 +115,28 @@ class MyObserver : LifecycleObserver {
 // 3. 添加监听
 myLifecycleOwner.getLifecycle().addObserver(MyObserver())
 ```
+
+使用 LifecycleEventObserver
+
+```text
+class MyLifecycleEventObserver : LifecycleEventObserver {
+
+    override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+        //do something
+    }
+
+    //不会被调用
+    @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
+    fun resolveCreate() {
+        //never called
+
+    }
+}
+```
+
+上面被OnLifeCycleEvent注解标记的方法不会被自动调用，因为在LifecycleEventObserver注释中可以看到：
+
+> If a class implements this interface and in the same time uses OnLifecycleEvent, then annotations will be ignored.
 
 组件之间通过事件来进行通信。
 
@@ -299,6 +321,7 @@ static class ObserverWithState {
 
 ```text
 //androidx.lifecycle.LifeCycling
+//参数是 object
 @NonNull
 static LifecycleEventObserver lifecycleEventObserver(Object object) {
     // 根据不同的类型创建observer
