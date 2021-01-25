@@ -4,9 +4,9 @@ description: Jetpack  LifeCycle 库
 
 # LifeCycle
 
-## LifeCycle 解决了什么问题？
-
 LifeCycle 是 Android Jetpack 的一部分，它提供了一种机制可以让程序可以更加方便的响应 Android 组件（如 Activity）的生命周期。
+
+## Lifecycle 库解决了什么问题？
 
 在此之前，如果一个组件需要响应 Android 组件的生命周期事件，通常可以在对应的生命周期回调里进行，例如下面的代码示例：
 
@@ -25,6 +25,7 @@ internal class MyLocationListener(
     }
 }
 
+
 class MyActivity : AppCompatActivity() {
     private lateinit var myLocationListener: MyLocationListener
 
@@ -37,6 +38,7 @@ class MyActivity : AppCompatActivity() {
     public override fun onStart() {
         super.onStart()
         myLocationListener.start()
+        
         // manage other components that need to respond
         // to the activity lifecycle
     }
@@ -44,6 +46,7 @@ class MyActivity : AppCompatActivity() {
     public override fun onStop() {
         super.onStop()
         myLocationListener.stop()
+        
         // manage other components that need to respond
         // to the activity lifecycle
     }
@@ -59,8 +62,9 @@ class MyActivity : AppCompatActivity() {
 
 ### 内存泄漏问题
 
+举一个官方文档中提到的例子：
+
 ```text
-//官网实例
 class MyActivity : AppCompatActivity() {
     private lateinit var myLocationListener: MyLocationListener
 
@@ -88,34 +92,34 @@ class MyActivity : AppCompatActivity() {
 }
 ```
 
-在上面例子中，如果Util.checkUserStatus 回调在onStop之后，就可能会导致MyActivity销毁后还在内存中，引发 Activity 泄漏。 
+在上面例子中，如果 Util.checkUserStatus 回调在 onStop 之后，就可能会导致 MyActivity 被销毁后还在内存中（非静态内部类引用），引发 Activity 泄漏。 
 
-通过 LifeCycle 提供的机制，可以将组件响应生命周期的操作集中在组件内部，提高代码的可维护性，简而言之就是解耦。
+而通过 LifeCycle 提供的机制，可以将组件响应生命周期的操作集中在组件内部，提高代码的可维护性，简而言之就是解耦。
 
 ## 如何使用 LifeCycle 
 
-### 集成lifecycle库
+### 集成 lifecycle 库
+
+lifecycle 有两个核心库:`lifecycle-common` 和 `lifecycle-runtime`。如果使用了AndroidX，这两个库就会被间接集成到项目中（通过 `androidx.core:core`或者`androidx.appcompat:appcompat` ）。
+
+如果项目使用 Java 8，则需要集成`lifecycle-common-java8，`否则可以集成`lifecycle-compiler`来通过注解避免反射调用（后面会详细讲解），如下面所示：
 
 ```text
 dependencies {
     def lifecycle_version = "2.2.0"
-
-    // 可以通过 ViewModel/LiveData 间接引用
-    https://developer.android.com/jetpack/androidx/releases/lifecycle#declaring_dependencies
-    
-    // Lifecycles only (without ViewModel or LiveData)
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
-
     // Annotation processor
     kapt "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
+    
     // alternately - if using Java8, use the following instead of lifecycle-compiler
     implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
 }
 ```
 
-可以通过ViewModel或者LiveData来间接集成Lifecycle库，这里以只依赖Lifecycle库来举例，是否集成注解处理库，会影响Observer创建方式，不集成时通过反射调用。
+> 注：如果两个库都不集成，则会通过反射进行监听器方法的调用。
 
 ### 创建监听器
+
+#### 未使用Java 8
 
 使用LifecycleObserver+注解
 
@@ -176,11 +180,30 @@ class MyLifecycleEventObserver : LifecycleEventObserver {
  }
 ```
 
-### 添加监听器
+#### 使用Java8
+
+```text
+class TestObserver implements DefaultLifecycleObserver {
+     @Override
+     public void onCreate(LifecycleOwner owner) {
+         // your code
+     }
+     
+     //其他生命周期方法
+ }
+```
+
+### 
+
+### 注册监听器
 
 
 
 ## 监听生命周期的源码
+
+
+
+
 
 ## 处理生命周期事件源码
 
