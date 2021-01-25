@@ -165,7 +165,7 @@ class MyLifecycleEventObserver : LifecycleEventObserver {
 
 
 
-带有参数的情况。 
+带有参数的情况。 方便处理监听多个LifecycleOwener的情况，或者对Event统一处理。
 
 ```text
  class TestObserver implements LifecycleObserver {
