@@ -115,6 +115,8 @@ dependencies {
 
 是否集成注解处理库，会影响Observer创建方式，不集成时通过反射调用。
 
+### 创建监听器
+
 使用LifecycleObserver+注解
 
 ```text
@@ -161,9 +163,13 @@ class MyLifecycleEventObserver : LifecycleEventObserver {
 
 组件之间通过事件来进行通信。
 
-## 如何监听生命周期事件
+### 添加监听器
 
-## 如何处理生命周期事件
+
+
+## 监听生命周期的源码
+
+## 处理生命周期事件源码
 
 
 
@@ -382,6 +388,12 @@ static LifecycleEventObserver lifecycleEventObserver(Object object) {
 如果集成了注解处理库，就会生成对应的Adapter类，就不会进行反射调用；否则会通过反射进行调用。
 
 ## 监听应用生命周期
+
+集成依赖
+
+```text
+implementation "androidx.lifecycle:lifecycle-process:$lifecycle_version"
+```
 
 {% embed url="https://developer.android.com/reference/androidx/lifecycle/ProcessLifecycleOwner?hl=zh-cn" %}
 
