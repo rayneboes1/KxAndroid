@@ -6,7 +6,7 @@ description: Jetpack  LifeCycle 库
 
 ## LifeCycle 解决了什么问题？
 
-LifeCycle 是Jetpack 的一部分，它提供了一种机制让程序可以更加方便的响应响应 Android 组件（如Activity）的生命周期。
+LifeCycle 是Jetpack 的一部分，它提供了一种机制让程序可以更加方便的响应 Android 组件（如Activity）的生命周期。
 
 在此之前，如果一个组件需要响应 Android 组件的生命周期事件，通常可以在对应的生命周期回调里进行：
 
