@@ -6,9 +6,9 @@ description: Jetpack  LifeCycle 库
 
 ## LifeCycle 解决了什么问题？
 
-LifeCycle 是Jetpack 的一部分，它提供了一种机制让程序可以更加方便的响应 Android 组件（如Activity）的生命周期。
+LifeCycle 是 Android Jetpack 的一部分，它提供了一种机制可以让程序可以更加方便的响应 Android 组件（如 Activity）的生命周期。
 
-在此之前，如果一个组件需要响应 Android 组件的生命周期事件，通常可以在对应的生命周期回调里进行：
+在此之前，如果一个组件需要响应 Android 组件的生命周期事件，通常可以在对应的生命周期回调里进行，例如下面的代码示例：
 
 ```text
 internal class MyLocationListener(
@@ -50,12 +50,12 @@ class MyActivity : AppCompatActivity() {
 }
 ```
 
-但是上面的代码在真实的项目中会导致两个问题：
+但是上面的代码会导致两个问题：
 
 ### 代码质量问题
 
-* 可能有多个组件需要响应同一个 Activity 的生命周期，这就导致了Activity 的生命周期方法里充斥着处理各种组件的代码，不易维护
-* 可能多个Activity 需要使用同一个组件，那么就需要在每个Activity的生命周期回调中处理这个组件，产生不必要的重复代码
+* 可能有多个组件需要响应同一个 Activity 的生命周期，这就导致了Activity 的生命周期方法里充斥着处理各个组件的代码，不易维护
+* 可能多个Activity 需要使用同一个组件，那么就需要在每个Activity的生命周期回调中都添加处理这个组件的逻辑，产生了不必要的重复代码
 
 ### 内存泄漏问题
 
@@ -88,9 +88,9 @@ class MyActivity : AppCompatActivity() {
 }
 ```
 
-在上面例子中，如果Util.checkUserStatus 回调在onStop之后，就可能会导致MyActivity销毁后还在内存中，引发内存泄漏。 
+在上面例子中，如果Util.checkUserStatus 回调在onStop之后，就可能会导致MyActivity销毁后还在内存中，引发 Activity 泄漏。 
 
-通过 LifeCycle 提供的机制，可以将维护组件响应其他组件生命周期的操作集中在组件内部，提高代码的可维护性，简而言之就是解耦。
+通过 LifeCycle 提供的机制，可以将组件响应生命周期的操作集中在组件内部，提高代码的可维护性，简而言之就是解耦。
 
 ## 如何使用 LifeCycle 
 
@@ -113,7 +113,7 @@ dependencies {
 }
 ```
 
-是否集成注解处理库，会影响Observer创建方式，不集成时通过反射调用。
+可以通过ViewModel或者LiveData来间接集成Lifecycle库，这里以只依赖Lifecycle库来举例，是否集成注解处理库，会影响Observer创建方式，不集成时通过反射调用。
 
 ### 创建监听器
 
@@ -162,6 +162,19 @@ class MyLifecycleEventObserver : LifecycleEventObserver {
 > If a class implements this interface and in the same time uses OnLifecycleEvent, then annotations will be ignored.
 
 组件之间通过事件来进行通信。
+
+
+
+带有参数的情况。 
+
+```text
+ class TestObserver implements LifecycleObserver {
+   @OnLifecycleEvent(ON_CREATE)
+   void onCreated(LifecycleOwner source) {}
+   @OnLifecycleEvent(ON_ANY)
+   void onAny(LifecycleOwner source, Event event) {}
+ }
+```
 
 ### 添加监听器
 
@@ -398,6 +411,14 @@ implementation "androidx.lifecycle:lifecycle-process:$lifecycle_version"
 {% embed url="https://developer.android.com/reference/androidx/lifecycle/ProcessLifecycleOwner?hl=zh-cn" %}
 
 ## 自定义 LifeCyclerOwner
+
+
+
+
+
+## 一些小问题
+
+使用Java 8 开发时可以通过集成 common-java8 并继承 DefaultLifecycleObserver，重写对应的生命周期方法即可，从而可以避免注解处理过程。DefaultLifecycleObserver 是一个接口，为每个回调方法提供了空的实现。
 
 
 
