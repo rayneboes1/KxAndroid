@@ -193,7 +193,9 @@ class TestObserver implements DefaultLifecycleObserver {
  }
 ```
 
-### 
+为什么Java8之前通过注解+接口？Java8之后只要接口就可以了
+
+为了灵活性，Java8之前，只能通过抽象类来实现，但是抽象类会影响继承关系；完全使用接口则需要实现所有方法。
 
 ### 注册监听器
 
