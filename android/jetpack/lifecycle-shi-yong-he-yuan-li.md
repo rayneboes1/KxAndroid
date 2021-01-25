@@ -267,9 +267,73 @@ LifecycleRegistry
 
 ## 监听器注解的处理时机
 
-添加监听时通过反射进行处理。
+注解处理器生成 observe——adapter类。
 
+```text
+//androidx.lifecycle.LifycycleRegistry
+@Override
+public void addObserver(@NonNull LifecycleObserver observer) {
+    State initialState = mState == DESTROYED ? DESTROYED : INITIALIZED;
+    ObserverWithState statefulObserver = new ObserverWithState(observer, initialState);
+    //....
+    //ObserverWithState previous = mObserverMap.putIfAbsent(observer, statefulObserver);
+}
 
+static class ObserverWithState {
+        State mState;
+        LifecycleEventObserver mLifecycleObserver;
+
+        ObserverWithState(LifecycleObserver observer, State initialState) {
+            mLifecycleObserver = Lifecycling.lifecycleEventObserver(observer);
+            mState = initialState;
+        }
+
+        void dispatchEvent(LifecycleOwner owner, Event event) {
+            State newState = getStateAfter(event);
+            mState = min(mState, newState);
+            mLifecycleObserver.onStateChanged(owner, event);
+            mState = newState;
+        }
+    }
+```
+
+```text
+//androidx.lifecycle.LifeCycling
+@NonNull
+static LifecycleEventObserver lifecycleEventObserver(Object object) {
+    // 根据不同的类型创建observer
+    boolean isLifecycleEventObserver = object instanceof LifecycleEventObserver;
+    boolean isFullLifecycleObserver = object instanceof FullLifecycleObserver;
+    if (isLifecycleEventObserver && isFullLifecycleObserver) {
+        return new FullLifecycleObserverAdapter((FullLifecycleObserver) object,
+                (LifecycleEventObserver) object);
+    }
+    if (isFullLifecycleObserver) {
+        return new FullLifecycleObserverAdapter((FullLifecycleObserver) object, null);
+    }
+    if (isLifecycleEventObserver) {
+           return (LifecycleEventObserver) object;
+    }
+
+    final Class<?> klass = object.getClass();
+    int type = getObserverConstructorType(klass);
+    if (type == GENERATED_CALLBACK) {
+        List<Constructor<? extends GeneratedAdapter>> constructors =
+                sClassToAdapters.get(klass);
+        if (constructors.size() == 1) {
+            GeneratedAdapter generatedAdapter = createGeneratedAdapter(
+                    constructors.get(0), object);
+            return new SingleGeneratedAdapterObserver(generatedAdapter);
+        }
+        GeneratedAdapter[] adapters = new GeneratedAdapter[constructors.size()];
+        for (int i = 0; i < constructors.size(); i++) {
+            adapters[i] = createGeneratedAdapter(constructors.get(i), object);
+        }
+        return new CompositeGeneratedAdaptersObserver(adapters);
+    }
+    return new ReflectiveGenericLifecycleObserver(object);
+}
+```
 
 ## 监听应用生命周期
 
